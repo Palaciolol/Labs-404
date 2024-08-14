@@ -21,4 +21,4 @@ end:
   ecall
 
 result:
-  .word 0
+  .data 0
