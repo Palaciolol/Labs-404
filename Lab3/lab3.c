@@ -68,22 +68,22 @@ void decimal_to_hexa(int decimal, char* hexa){
         int quo = decimal/16;
         int r = decimal % 16;
         if (r == 10){
-          hexa[i] = 'A';
+          hexa[i] = 'a';
         }
         else if (r == 11){
-          hexa[i] = 'B';
+          hexa[i] = 'b';
         }
         else if (r == 12){
-          hexa[i] = 'C';
+          hexa[i] = 'c';
         }
         else if (r == 13){
-          hexa[i] = 'D';
+          hexa[i] = 'd';
         }
         else if (r == 14){
-          hexa[i] = 'E';
+          hexa[i] = 'e';
         }
         else if (r == 15){
-          hexa[i] = 'F';
+          hexa[i] = 'f';
         }
         else{
           hexa[i] = r;
@@ -111,12 +111,13 @@ void invert_string(char* string, char* invertida){
         tam--;
     }
     invertida[i] = '\0';
+    invertida[i+1] = '\n';
     
 }
 
 int convert_to_number(char *string){
     int num = 0;
-    for (int i = 0; i < 20; i++){
+    for (int i = 0; i < string_lenght(string); i++){
       num = num * 10 + (string[i] - '0');
     }
     
@@ -135,21 +136,22 @@ void convert_to_string(int num, char* string, char* invertida){
   invert_string(string, invertida);
 }
 
-void escrever_binario(char* final, int count, char* removed_zeros_binary){
+void escrever_binario(char* final,char* removed_zeros_binary){
   final[0] = '0';
   final[1] = 'b';
-  for (int i = 0; i < count; i++){
+  for (int i = 0; i < string_lenght(removed_zeros_binary); i++){
     final[i + 2] = removed_zeros_binary[i];
   }
-  final[count + 3] = '\n';
+  final[string_lenght(final)] = '\n';
 }
 
-void escrever_hexa(char* final, int count, char* hexa_inverted){
+void escrever_hexa(char* final, char* hexa){
   final[0] = '0';
   final[1] = 'x';
-  for (int i = 0; i < count; i++){
-    final[2 + i] = hexa_inverted[i];
+  for (int i = 0; i < string_lenght(hexa); i++){
+    final[2 + i] = hexa[i];
   }
+  final[string_lenght(final)] = '\n';
 }
 
 void rewrite_hexa(char* input, int count){
@@ -208,7 +210,13 @@ void remove_zeros(char* old_char, char* new_char){
   }
 }
 
-
+int calculate_pot(int base, int exponent){
+  int result = 1;
+  for (int i = 0; i < exponent; i++){
+    result *= base;
+  }
+  return result;
+}
 
 int binary_to_decimal(char* binary){
   int sum = 0;
@@ -242,13 +250,6 @@ int hexa_to_decimal(char* hexa){
   return sum;
 }
 
-int calculate_pot(int base, int exponent){
-  int result = 1;
-  for (int i = 0; i < exponent; i++){
-    result *= base;
-  }
-  return result;
-}
 
 void invert_bits(char* inverted_bits, char* binary){
   for (int i = 0; i < string_lenght(binary); i++){
@@ -300,8 +301,16 @@ void binary_to_hexa(char* binary, char* hexa){
   for(int i = 0; i < string_lenght(binary); i++){
       aux[i] = binary[i];
       if (j % 4 == 0){
-        hexa[j + 2] = check(binary_to_decimal(aux));
-        clean_string(aux);
+        if (j == 4){
+          hexa[i + 2] = check(binary_to_decimal(aux));
+          clean_string(aux);
+        }
+        else{
+          char* new_aux;
+          remove_zeros(aux, new_aux);
+          hexa[i + 2] = check(binary_to_decimal(new_aux));
+          clean_string(aux);
+        }
       }
       j++;
   }
@@ -309,7 +318,6 @@ void binary_to_hexa(char* binary, char* hexa){
 }
 
 void complete_zeros(char* binary){
-  int count = string_lenght(binary);
   for (int i = string_lenght(binary); i < 31; i++){
     binary[i] = 0;
   }
@@ -324,169 +332,147 @@ int main()
   
   if (input[1] == 'x'){
     //caso que recebo um número hexadecimal
-    int count = string_lenght(input);
-    int decimal = hexa_to_decimal(input);
+    int decimal = hexa_to_decimal(input); //converto o número hexa pra decimal
     char* binary_inverted;
-    decimal_to_binary(decimal, binary_inverted);
+    decimal_to_binary(decimal, binary_inverted); //converto ele pra binário
     char* binary;
-    invert_string(binary_inverted, binary);
+    invert_string(binary_inverted, binary); //inverto o binário
     char* removed_zeros_binary;
-    remove_zeros(binary, removed_zeros_binary);
-    int count = string_lenght(removed_zeros_binary);
+    remove_zeros(binary, removed_zeros_binary); //removo os zeros
     char*final;
-    escrever_binario(final, count, removed_zeros_binary);
-    count = count + 3;
-    write(STDOUT_FD, final, count); //em binário
-
+    escrever_binario(final, removed_zeros_binary);
+    write(STDOUT_FD, final, string_lenght(final)); //em binário
 
     ////////////////////////////////
-    if (removed_zeros_binary[0] = '1'){
+    if (removed_zeros_binary[0] == '1'){
+      char* inverted_bits;
+      invert_bits(inverted_bits, removed_zeros_binary);  
+      int decimal = binary_to_decimal(inverted_bits);
+      decimal += 1;
       char* string;
       char* invertida;
       convert_to_string(decimal, string, invertida);
-      for (int i = 0; i < string_lenght(string); i++){
-        string[i+1] = string[i];
+      for (int i = 0; i < string_lenght(invertida); i++){
+        invertida[i+1] = invertida[i];
       }
-      string[0] = '-';
-      int count2 = string_lenght(string);
-      write(STDOUT_FD, string, count2); //em decimal
+      invertida[0] = '-';
+      write(STDOUT_FD, invertida, string_lenght(invertida)); //em decimal
+      write(STDOUT_FD, "\n", 1);
     }
     else{
       char* string;
       char* invertida;
       convert_to_string(decimal, string, invertida);
-      int count2 = string_lenght(string);
-      write(STDOUT_FD, string, count2); //em decimal
+      write(STDOUT_FD, invertida, string_lenght(invertida)); //em decimal
     }
     ///////////////////////////////
 
-    write(STDOUT_FD, input, count); //em hexa
+    write(STDOUT_FD, input, string_lenght(input)); //em hexa
 
     ///////////////////////////////
 
     char* binary_endian_swap;
-    char* binary_endian_swap_removed_zeros;
     swap_endianness(binary, binary_endian_swap);
-
+    char* binary_endian_swap_removed_zeros;
     remove_zeros(binary_endian_swap, binary_endian_swap_removed_zeros);
     int sum = binary_to_decimal(binary_endian_swap_removed_zeros);
     char* string;
     char* invertida;
     convert_to_string(sum, string, invertida);
+    write(STDOUT_FD, invertida, string_lenght(invertida));  //em decimal bugado
 
-    int count4 = string_lenght(invertida);
-    write(STDOUT_FD, invertida, count4);  //em decimal bugado
-
-
+    ///////////////////////////////////
     
   }
   else if (input[0] == '-'){
     //caso que recebo um número negativo 
-    int count = string_lenght(input);
-    write(STDOUT_FD, input, count); //em decimal
     char* aux;
-    for (int i = 0; i < count; i++){
-      aux[i] = input[1+i]; 
+    for (int i = 0; i < string_lenght(input)-1; i++){
+      aux[i] = input[1+i];  //loop pra tirar o menos da frente
     }
-    int decimal = convert_to_number(aux);
-    decimal -= 1;
+    int decimal = convert_to_number(aux); //converto pra decimal
+    decimal -= 1; //tiro um porque é complemento de 2
     char* binary_inverted;
-    decimal_to_binary(decimal, binary_inverted);
+    decimal_to_binary(decimal, binary_inverted); //converto pra binário
     char* binary;
-    invert_string(binary_inverted, binary);
+    invert_string(binary_inverted, binary); //inverto o binário
     char* removed_zeros_binary;
-    remove_zeros(binary, removed_zeros_binary);
+    remove_zeros(binary, removed_zeros_binary); //tiro os zeros à esquerda
     char* inverted_bits;
     invert_bits(inverted_bits, removed_zeros_binary);
-    int count = string_lenght(inverted_bits);
     char*final;
-    escrever_binario(final, count, inverted_bits);
-    count = count + 3;
-    write(STDOUT_FD, final, count); //em binário
+    escrever_binario(final,inverted_bits);
+    write(STDOUT_FD, final, string_lenght(final)); //em binário
 
     ///////////////////////////////////
     
-    write(STDOUT_FD, input, count);
+    write(STDOUT_FD, input, string_lenght(input)); //só imprimo o número negativo
 
     ///////////////////////////////////
 
     char* hexa;
     binary_to_hexa(inverted_bits, hexa);
     write(STDOUT_FD, hexa, string_lenght(hexa));
+    write(STDOUT_FD, "\n", 1);
     
     ///////////////////////////////////
 
     char* invertida;
     invert_string(inverted_bits, invertida);
     complete_zeros(invertida);
-
     char* invertida_certo;
     invert_string(invertida, invertida_certo);
-
     char* binary_endian_swap;
-    char* binary_endian_swap_removed_zeros;
     swap_endianness(invertida_certo, binary_endian_swap);
-
+    char* binary_endian_swap_removed_zeros;
     remove_zeros(binary_endian_swap, binary_endian_swap_removed_zeros);
     int sum = binary_to_decimal(binary_endian_swap_removed_zeros);
     char* string;
     char* invertida2;
     convert_to_string(sum, string, invertida2);
-
     write(STDOUT_FD, invertida2, string_lenght(invertida2));
 
   }
-
   else{
-  
-  //caso que recebo um número positivo
-  int num = convert_to_number(input);  //converto a string pra número
-  char* binary_inverted; //char que armazena o binário invertido
-  decimal_to_binary(num, binary_inverted); //coloco esse número em uma string de binário
-  char* binary; //char que armazena o binário 
-  invert_string(binary_inverted, binary); //inverto essa string de binário
-  char* removed_zeros_binary;
-  remove_zeros(binary, removed_zeros_binary);
+    //caso que recebo um número positivo
+    int num = convert_to_number(input);  //converto a string pra número
+    char* binary_inverted; //char que armazena o binário invertido
+    decimal_to_binary(num, binary_inverted); //coloco esse número em uma string de binário
+    char* binary; //char que armazena o binário 
+    invert_string(binary_inverted, binary); //inverto essa string de binário
+    char* removed_zeros_binary; //char que armazena o binário sem os zeros à esquerda
+    remove_zeros(binary, removed_zeros_binary);
+    char*final; //char que armazena o que vai ser printado
+    escrever_binario(final,removed_zeros_binary); //coloca o 0b no início
+    write(STDOUT_FD, final, string_lenght(final)); //em binário
 
-  int count = string_lenght(removed_zeros_binary);
-  char*final;
-  count = count + 3;
-  escrever_binario(final, count, removed_zeros_binary);
-  char* hexa;
-  decimal_to_hexa(num, hexa);
-  char* hexa_inverted ;
-  invert_string(hexa_inverted, hexa);
-  int count2 = string_lenght(hexa);
-  char*final2;
-  escrever_hexa(final2, count2, hexa);
-  count2 = count + 3;
-  int count3 = string_lenght(input);  
+    /////////////////////////////////
+    write(STDOUT_FD, input, string_lenght(input)); //o próprio número em decimal
+    ///////////////////////////////////////////////
 
-  char* binary_endian_swap;
-  char* binary_endian_swap_removed_zeros;
-  swap_endianness(binary, binary_endian_swap);
+    char* hexa_inverted;
+    decimal_to_hexa(num, hexa_inverted);
+    char* hexa ;
+    invert_string(hexa_inverted, hexa);
+    int count2 = string_lenght(hexa);
+    char*final2;
+    escrever_hexa(final2, hexa);
+    write(STDOUT_FD, final2, string_lenght(final2));  //em hexadecimal
+    ///////////////////////////////////
 
-  remove_zeros(binary_endian_swap, binary_endian_swap_removed_zeros);
-  int sum = binary_to_decimal(binary_endian_swap_removed_zeros);
-  char* string;
-  char* invertida;
-  convert_to_string(sum, string, invertida);
-
-  int count4 = string_lenght(invertida);
-
-  write(STDOUT_FD, final, count); //em binário
-  write(STDOUT_FD, input, count3); //o próprio número em decimal
-  write(STDOUT_FD, final2, count2);  //em hexadecimal
-  write(STDOUT_FD, invertida, count4);  //em decimal bugado
+    char* binary_endian_swap;
+    swap_endianness(binary, binary_endian_swap); //função que swapa o endianness
+    char* binary_endian_swap_removed_zeros;
+    remove_zeros(binary_endian_swap, binary_endian_swap_removed_zeros);
+    int sum = binary_to_decimal(binary_endian_swap_removed_zeros);
+    char* string;
+    char* invertida;
+    convert_to_string(sum, string, invertida);
+    write(STDOUT_FD, invertida, string_lenght(invertida));  //em decimal bugado
+    /////////////////////////////////
   }
-
-
-  
   return 0;
-
-
 }
-
 void _start()
 {
   int ret_code = main();
