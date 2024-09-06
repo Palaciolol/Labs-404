@@ -407,10 +407,76 @@ void get_inst_data(char inst[], InstData *data){
     return;
 }
 
+unsigned slice_number(unsigned number, int end, int start){
+    number =  number << (32 - end -1);
+    number =  number >> (32 -(end - start + 1));
+    return number;
+    
+}
+
 int main(){
     char input[40];
     int n = read(STDIN_FD, input, 40);
-
+    unsigned result = 0;
+    InstData data;
+    get_inst_data(input, &data);
+    switch (data.type)
+    {
+    case R:
+        result = result | data.opcode;
+        result = result | (data.rd << 7);
+        result = result | (data.funct3 << 12);
+        result = result | (data.rs1 << 15);
+        result = result | (data.rs2 << 20);
+        result = result | (data.funct7 << 25);
+        hex_code(result);
+        break;
+    case I:
+        result = result | data.opcode;
+        result = result | (data.rd << 7);
+        result = result | (data.funct3 << 12);
+        result = result | (data.rs1 << 15);
+        result = result | (data.imm << 20);   
+        hex_code(result);   
+        break;
+    case S:
+        result = result | data.opcode;
+        result = result | (slice_number(data.imm, 4,0) << 7);
+        result = result | (data.funct3 << 12);
+        result = result | (data.rs1 << 15);
+        result = result | (data.rs2 << 20);
+        result = result | (slice_number(data.imm, 11,5) << 25);
+        hex_code(result);
+        break;
+    case B:
+        result = result | data.opcode;
+        result = result | (slice_number(data.imm, 12,11) << 7);
+        result = result | (slice_number(data.imm, 4,1) << 8);
+        result = result | (data.funct3 << 12);
+        result = result | (data.rs1 << 15);
+        result = result | (data.rs2 << 20);
+        result = result | (slice_number(data.imm, 10,5) << 25);
+        result = result | (slice_number(data.imm, 13,12) << 31);
+        hex_code(result);
+        break;
+    case U:
+        result = result | data.opcode;
+        result = result | (data.rd << 7);
+        result = result | (data.imm << 12);
+        hex_code(result);
+        break;
+    case J:
+        result = result | data.opcode;
+        result = result | (data.rd << 7);
+        result = result | (slice_number(data.imm, 19,12) << 12);
+        result = result | (slice_number(data.imm, 12,11) << 19);
+        result = result | (slice_number(data.imm, 10,1) << 21);
+        result = result | (slice_number(data.imm, 21,20) << 31);
+        hex_code(result);
+        break;      
+    default:
+        break;
+    }
     return 0;
 }
 
