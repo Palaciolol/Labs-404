@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 int read(int __fd, const void *__buf, int __n){
     int ret_val;
   __asm__ __volatile__(
