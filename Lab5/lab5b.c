@@ -414,6 +414,11 @@ unsigned slice_number(unsigned number, int end, int start){
     
 }
 
+unsigned get_bit(unsigned number, int bit_position) {
+    return (number >> bit_position) & 1;  
+}
+
+
 int main(){
     char input[40];
     int n = read(STDIN_FD, input, 40);
@@ -450,13 +455,13 @@ int main(){
         break;
     case B:
         result = result | data.opcode;
-        result = result | (slice_number(data.imm, 12,11) << 7);
+        result = result | (get_bit(data.imm, 11) << 7);
         result = result | (slice_number(data.imm, 4,1) << 8);
         result = result | (data.funct3 << 12);
         result = result | (data.rs1 << 15);
         result = result | (data.rs2 << 20);
         result = result | (slice_number(data.imm, 10,5) << 25);
-        result = result | (slice_number(data.imm, 13,12) << 31);
+        result = result | (get_bit(data.imm, 12) << 31);
         hex_code(result);
         break;
     case U:
@@ -465,11 +470,11 @@ int main(){
         result = result | (data.imm << 12);
         hex_code(result);
         break;
-    case J:
+    case J: 
         result = result | data.opcode;
         result = result | (data.rd << 7);
         result = result | (slice_number(data.imm, 19,12) << 12);
-        result = result | (slice_number(data.imm, 12,11) << 19);
+        result = result | (slice_number(data.imm, 12,11) << 20);
         result = result | (slice_number(data.imm, 10,1) << 21);
         result = result | (slice_number(data.imm, 21,20) << 31);
         hex_code(result);
