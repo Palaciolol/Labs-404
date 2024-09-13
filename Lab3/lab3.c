@@ -124,6 +124,7 @@ void convert_to_string(unsigned int  num, char* string) {
     string[i] = '\0';  // Adiciona o caractere nulo
 }
 
+
 void swap_endianness(char* binary, char* binary_endian_swap) {
     for (int i = 0; i < 32; i += 8) {
         for (int j = 0; j < 8; j++) {
