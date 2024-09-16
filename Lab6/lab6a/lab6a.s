@@ -55,7 +55,6 @@ void convert_to_string(unsigned int  num, char* string) {
 */
 #a1 --> endereço da string
 #a2 --> valor de onde eu vou começar a por os valores
-
 convert_to_string:
     li t0, 0        #variável de fim de laço
     li t1, 0        #variável contadora
