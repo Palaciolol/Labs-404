@@ -5,7 +5,6 @@
     input_address: .space 20  #buffer
     string:        .space 4   #string que vai guardar os números
     output_adress: .space 20  #output 
-    teste:         .space 2
 
 
 .section .text
@@ -23,8 +22,8 @@ read:
 //function to write data on the standart output
 write: 
     li a0, 1                #file descriptor = 1 (stdout)
-    la a1, teste            #buffer
-    li a2, 2                #size
+    la a1, output_adress            #buffer
+    li a2, 20                #size
     li a7, 64               #syscall write (64)
     ecall
     ret                     #retorno da função 
@@ -61,11 +60,11 @@ convert_to_string:
     li t0, 0        #variável de fim de laço
     li t1, 0        #variável contadora
     li t2, 10       #variável que guarda o valor 10
-    //li t5, 4        #variável que guarda o valor 4
+    li t5, 5        #variável que guarda o valor 4
     //add t4, a1, a2  #t4 = endereço base da string(a1) + a2(onde eu devo começar a por os valores) - t1(variável contadora)
     add a1, a1, a2
     laco3:
-        beq a0, t0, fim3        #confere se o número já é igual a zero(fim do laço)
+        beq a0, t0, complete_zeros        #confere se o número já é igual a zero(fim do laço)
         remu t3, a0, t2         #pega o resto da divisão por 10
         //sub t4, t4, t1          #t4 = endereço base da string(a1) - t1
         add t3, t3 , '0'        #t3 recebe ele mesmo mais o caractere 0 pra transformar em string
@@ -74,12 +73,14 @@ convert_to_string:
         addi a1, a1, -1
         divu a0, a0, t2         #a0 recebe ele mesmo dividido por 10
         j laco3                 #pula pro laço de novo
-    # fim2:
-       # beq t1,t5 ,fim3         # if t0 <= t1 then target
-        #addi t1, t1, 1          #incrementa a variável contadora
-        #ub t4, a1, t1         #t4 = endereço base da string(a1) - t1
-        #sb t0, 0(t4)            #coloco esse byte na posição correta da string
-        #j fim2                  #pula pro laço de novo
+     complete_zeros:
+        beq t1,t5 ,fim3         # if t0 <= t1 then target
+        addi t1, t1, 1          #incrementa a variável contadora
+        li t6 , 0
+        add t6, t6, '0'
+        sb t6, 0(a1)
+        addi a1, a1, -1
+        j complete_zeros
     fim3:
         ret
 
@@ -164,17 +165,101 @@ _start:
 
     //4- transforma em string de novo colocando no vetor de char
     //o valor da raiz quadrada ta em a0
-    la a1, teste               #o endereço de string tá em a1 agr
-    li a2, 1                    #endereço que é pra eu começar a escrever os números de trás pra frente
+    mv a0, t3
+    la a1, output_adress               #o endereço de string tá em a1 agr
+    li a2, 3                    #endereço que é pra eu começar a escrever os números de trás pra frente
     jal convert_to_string       #chama a função de converter pra string
+    ///////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    li a0 , 5
+    li a1 , 9
+    la t0, input_address
+    la t1, string
+    jal slice_string
+
+    //2- converte isso pra número  OKKKKK EU ACHOOOOO
+    la a0, string
+    li a1, 0
+    jal convert_to_number
+    
+
+    //3- calcula a raiz disso       OKKKKKKKK EU ACHOOO
+    //o valor do número em decimal tá em a1
+    mv a0, a1       
+    jal calculate_sqrt
+
+
+    //4- transforma em string de novo colocando no vetor de char
+    //o valor da raiz quadrada ta em a0
+    mv a0, t3
+    la a1, output_adress               #o endereço de string tá em a1 agr
+    li a2, 8                    #endereço que é pra eu começar a escrever os números de trás pra frente
+    jal convert_to_string       #chama a função de converter pra string
+    ////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////
+    li a0 , 10
+    li a1 , 14
+    la t0, input_address
+    la t1, string
+    jal slice_string
+
+    //2- converte isso pra número  OKKKKK EU ACHOOOOO
+    la a0, string
+    li a1, 0
+    jal convert_to_number
+    
+
+    //3- calcula a raiz disso       OKKKKKKKK EU ACHOOO
+    //o valor do número em decimal tá em a1
+    mv a0, a1       
+    jal calculate_sqrt
+
+
+    //4- transforma em string de novo colocando no vetor de char
+    //o valor da raiz quadrada ta em a0
+    mv a0, t3
+    la a1, output_adress               #o endereço de string tá em a1 agr
+    li a2, 13                    #endereço que é pra eu começar a escrever os números de trás pra frente
+    jal convert_to_string       #chama a função de converter pra string
+    /////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////
+    li a0 , 15
+    li a1 , 19
+    la t0, input_address
+    la t1, string
+    jal slice_string
+
+    //2- converte isso pra número  OKKKKK EU ACHOOOOO
+    la a0, string
+    li a1, 0
+    jal convert_to_number
+    
+
+    //3- calcula a raiz disso       OKKKKKKKK EU ACHOOO
+    //o valor do número em decimal tá em a1
+    mv a0, a1       
+    jal calculate_sqrt
+
+
+    //4- transforma em string de novo colocando no vetor de char
+    //o valor da raiz quadrada ta em a0
+    mv a0, t3
+    la a1, output_adress               #o endereço de string tá em a1 agr
+    li a2, 18                    #endereço que é pra eu começar a escrever os números de trás pra frente
+    jal convert_to_string       #chama a função de converter pra string
+
+    la a1, output_adress               #o endereço de string tá em a1 agr
+    li t0, ' '
+    sb t0, 4(a1)
+    sb t0, 9(a1)
+    sb t0, 14(a1)
+    li t0, '\n'
+    sb t0, 19(a1)
     jal write
     jal exit
 
-    //li t6, ' '
-    //addi t1, t1, 1          #incrementa a variável contadora
-    //add t4, a1, -t1         #t4 = endereço base da string(a1) - t1
-    //sb t6, 0(t4)            #coloco esse byte na posição correta da string
-    //5- faz isso 4 vezes 
+
     
 
 
