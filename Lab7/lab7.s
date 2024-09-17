@@ -54,27 +54,6 @@ exit:
     li a7, 93          #syscall de exit
     ecall
 
-
-
-#a0 --> endereço da string
-#a1 --> variável que vai guardar o valor do número em decimal
-convert_to_number:
-    li t0, 0        #variavél de laço iniciada em 0
-    li t3, 5
-    li t4 ,10
-    laco2:
-        beq t0, t3, acabou      #confere se já leu os 4 números
-        mul a1, a1, t4          #multiplica a1 por 10 e salva em a1
-        add t1, a0, t0          #t1 = endereço base da string(a0) + t0(variável contadora)
-        lb t2, 0(t1)            #t2 = valor da memória da string no endereço t1
-        addi t2, t2, -'0'       #converte t2 para valor numérico
-        add a1, a1, t2          #a1 = t2 - '0'
-        addi t0, t0, 1          #incrementa a variável de laço
-        j laco2                 #salta pro laço de novo
-    acabou:
-        ret                     #retorna pra main
-
-
 #a0 --> quantidade de 1 na substring, começa com 0
 #a1 --> endereço da substring
 #a2 --> endereço do output1
