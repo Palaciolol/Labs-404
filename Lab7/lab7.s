@@ -6,7 +6,7 @@
     subset1:       .space 3  #subset teste(d1d2d4)
     subset2:       .space 3  #subset teste(d1d3d4)
     subset3:       .space 3  #subset teste(d2d3d4)
-    output1:       .space 7  #input1 codificado 
+    output1:       .space 8  #input1 codificado 
     output2:       .space 5  #input2 decodificado 
     result:        .space 2  #caracte 1 ou 0 do resultado da decodificação
 
@@ -27,7 +27,7 @@ read:
 write: 
     li a0, 1                #file descriptor = 1 (stdout)
     la a1, output1          #buffer
-    li a2, 7                #size
+    li a2, 8                #size
     li a7, 64               #syscall write (64)
     ecall
     ret                     #retorno da função 
@@ -283,9 +283,9 @@ _start:
     la a0, input
     la a1, output1
     jal set_data_in_output
+    la a1, output1
     li t0, '\n'
     sb t0, 7(a1)
-    jal write
     
     
     /////////////////////////////////////////////////////////////
@@ -296,8 +296,8 @@ _start:
     la a1, output2
     jal grab_data
     li t0, '\n'
+    la a1, output2
     sb t0, 4(a1)
-    jal write2 //imprime a decodificação
 
     la a0, input
     la a1, output2
@@ -315,6 +315,8 @@ _start:
     sb t0, 0(a0)
     li t1, '\n'
     sb t1, 1(a0)
+    jal write
+    jal write2
     jal write3 //imprime o 0 pq deu certo
     jal exit
 
@@ -324,6 +326,8 @@ _start:
         sb t0, 0(a0)
         li t1, '\n'
         sb t1, 1(a0)
+        jal write
+        jal write2
         jal write3 //imprime o 1 pq deu erro
         jal exit 
 
