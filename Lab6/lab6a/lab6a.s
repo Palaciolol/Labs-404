@@ -34,25 +34,7 @@ exit:
     li a7, 93          #syscall de exit
     ecall
 
-/*
 
-
-void convert_to_string(unsigned int  num, char* string) {
-    int i = 0;
-    if (num < 0){
-      num = num * -1;
-    }
-    if (num == 0) {
-        string[i++] = '0';
-    } else {
-        while (num > 0) {
-            string[i++] = (num % 10) + '0';
-            num /= 10;
-        }
-    }
-    string[i] = '\0';  // Adiciona o caractere nulo
-}
-*/
 #a0 --> esse registrador guarda o valor da raiz quadrada
 #a1 --> endereço da string
 #a2 --> valor de onde eu vou começar a por os valores
