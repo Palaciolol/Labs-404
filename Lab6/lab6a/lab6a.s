@@ -42,7 +42,7 @@ convert_to_string:
     li t0, 0        #variável de fim de laço
     li t1, 0        #variável contadora
     li t2, 10       #variável que guarda o valor 10
-    li t5, 5        #variável que guarda o valor 4
+    li t5, 5        #variável que guarda o valor 5
     //add t4, a1, a2  #t4 = endereço base da string(a1) + a2(onde eu devo começar a por os valores) - t1(variável contadora)
     add a1, a1, a2
     laco3:
