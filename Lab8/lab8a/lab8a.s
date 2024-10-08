@@ -1,30 +1,24 @@
 .globl _start               #this one indicates where the programm begins
 
 .section .data
-    input:   .space 14
-    largura: .space 3
-    altura:  .space 3
-    maxval:  .space 3  
+    input:         .space 14
+    col:           .space 3
+    linhas:        .space 3
+    maxval:        .space 3  
+    temp:          .space 3
+    input_file: .asciz "image.pgm"
+
 
 .section .text
 .align 2
 
-#Use as input t0 for the amount of bytes to be read
+#Use as input a3 for the amount of bytes to be read
 read_file:
-    mv a2, t0
+    mv a2, a3
     la a1, input
     li a7, 63
     ecall
     ret
-
-#Function to write data on the standart output
-write: 
-    li a0, 1                #file descriptor = 1 (stdout)
-    la a1, output1          #buffer
-    li a2, 8                #size
-    li a7, 64               #syscall write (64)
-    ecall
-    ret                     #retorno da função 
 
 exit:
     li a0, 0           #isso daqui é pra finalizar o programa
@@ -33,9 +27,6 @@ exit:
 
 
 set_pixel:
-    li a0, 100 # x coordinate = 100
-    li a1, 200 # y coordinate = 200
-    li a2, 0xFFFFFFFF # white pixel
     li a7, 2200 # syscall setPixel (2200)
     ecall
     ret
@@ -55,149 +46,117 @@ open_file:
     ecall
     ret
 
-input_file: .asciz "image.pgm"
-
-
-
 close:
     li a0, 3             # file descriptor (fd) 3
     li a7, 57            # syscall close
     ecall
     ret
 
-input_file: .asciz "image.pgm"
-
-
 #a0 --> endereço da string
 #a1 --> variável que vai guardar o valor do número em decimal
+#a2 --> reg que guarda quantos bytes são pra converter
 convert_to_number:
     li t0, 0        #variavél de laço iniciada em 0
-    li t3, 4
     li t4 ,10
-    //add t1, a0, t0  #t1 = endereço base da string(a0) + t0(variável contadora)
     laco:
-        beq t0, t3, acabou      #confere se já leu os 4 números
+        beq t0, a2, acabou      #confere se já leu todos os bytes
         mul a1, a1, t4          #multiplica a1 por 10 e salva em a1
-        lb t2, 0(a0)            #t2 = valor da memória da string no endereço t1
+        lb t2, 0(a0)            #t2 = valor da memória da string no endereço a0
         addi t2, t2, -'0'       #converte t2 para valor numérico
-        add a1, a1, t2          #a1 = t2 - '0'
-        addi a0, a0, 1           
+        add a1, a1, t2          #a1 = a1 + t2
+        addi a0, a0, 1          #a0 = a0 + 1
         addi t0, t0, 1          #incrementa a variável de laço
-        j laco                 #salta pro laço de novo
+        j laco                  #salta pro laço de novo
     acabou:
+        mv a0, a1
         ret                     #retorna pra main
 
 
-get_width:
-    addi sp, sp, -4 #decremeta o sp pra abrir espaço na pilha
-    sw ra, 0(sp)    #salva o endereço de retorno na pilha   
-    li t0, 1        #t0 = 1
-    li t4, ' '      #t4 = ' '
-    jal read_file   #le um byte
-    la t1, input    #pega o endereço de input
-    la t2, largura  #pega o endereço de largura
-    lbu t3, 0(t1)   #carrega o valor lido em t3
-    sb t3, 0(t2)    #coloca t3 em largura
-    jal read_file   #chama a read
-    lbu t3, 0(t1)   #pega o valor lido
-    beq t3, t4, acabou
-    sb t3, 1(t2)    #como é um número, coloca esse número em largura
-    jal read_file   #chama a read
-    lbu t3, 0(t1)   #pega o valor lido
-    beq t3, t4, acabou
-    sb t3, 2(t2)    #é um número, então coloca ele em largura
-
-    acabou:
-    la a0, largura
-    li a1, 0
-    jal convert_to_number
-    lw ra, 0(sp)    #pega o valor de ra da pilha
-    addi sp, sp, 4  #incrementa sp
+#recebe o endereço que vai salvar os 3 btes em a0
+get_bytes:
+    addi sp, sp, -4
+    sw ra, 0(sp)
+    mv t6, a0       #move o endereço que vai salvar os bytes pra t6
+    la t5, input    #a1 = endereço do input
+    li t1, ' '      #espaço 
+    li t2, '\n'     #\n
+    li t4, 0        #contadora
+    loop:
+    li a3, 1    
+    mv a0, s1    
+    jal read_file
+    lb t3, 0(t5)
+    beq t3, t1, sai
+    beq t3, t2, sai
+    sb t3, 0(t6)
+    addi t6, t6, 1
+    addi t4, t4, 1
+    j loop
+    sai:
+    mv a0, t4
+    lw ra, 0(sp)         #pega o valor de ra da pilha
+    addi sp, sp, 4       #incrementa sp
     ret
-
-get_height:
-    addi sp, sp, -4 #decremeta o sp pra abrir espaço na pilha
-    sw ra, 0(sp)    #salva o endereço de retorno na pilha   
-    li t0, 1        #t0 = 1
-    jal read_file   #consome o espaço em branco
-    li t4, ' '      #t4 = ' '
-    jal read_file   #le um byte
-    la t1, input    #pega o endereço de input
-    la t2, altura  #pega o endereço de largura
-    lbu t3, 0(t1)   #carrega o valor lido em t3
-    sb t3, 0(t2)    #coloca t3 em largura
-    jal read_file   #chama a read
-    lbu t3, 0(t1)   #pega o valor lido
-    beq t3, t4, acabou
-    sb t3, 1(t2)    #como é um número, coloca esse número em largura
-    jal read_file   #chama a read
-    lbu t3, 0(t1)   #pega o valor lido
-    beq t3, t4, acabou
-    sb t3, 2(t2)    #é um número, então coloca ele em largura
-
-    acabou:
-    la a0, altura
-    li a1, 0
-    jal convert_to_number
-    li t0, 1
-    jal read_file   #consome o \n
-    lw ra, 0(sp)    #pega o valor de ra da pilha
-    addi sp, sp, 4  #incrementa sp
-    ret
-
 
 percorre_matriz:
     addi sp, sp, -4
     sw ra, 0(sp)
-    li t0, 0
+    li s6, 0
+    li t3, 255
     #s3 guarda o número de linhas e s2 o número de colunas
     linha_loop:
-    beq t0, s3, acabou          # Se t0 (linha) for igual a s3 (tamanho), termina o loop
-
-    li t1, 0                 # t1 = j (índice da coluna)
-
+    beq s6, s3, acabou3      #se s6 for igual a s3, termina o loop
+    li s7, 0                 #s7 = j (índice da coluna)
     coluna_loop:
-    beq t1, s2, proxima_linha # Se t2 (coluna) for igual a s2, pula para a próxima linha
-    jal set_pixel
-
-
-    
-
-    addi t1, t1, 2           # Incrementa o índice da coluna (j)
-    j coluna_loop            # Volta para o início do loop de coluna
-
+    beq s7, s2, proxima_linha   #se s7 (coluna) for igual a s2, pula para a próxima linha
+    li a3, 1             #vou ler 1 byte
+    mv a0, s1
+    jal read_file        #lê um byte
+    la t6, input         #pega o endereço do input
+    lbu a1, 0(t6)        #pega o byte e coloca em a1
+    slli a2, a1, 8       #desloca o gray value (a1) 8 bits para a esquerda para preparar o Blue
+    or a2, a2, t3        #coloca o Alpha no lugar certo (bits 0-7)
+    slli t4, a1, 16      #desloca o gray value (a1) 16 bits para a esquerda para preparar o Green
+    or a2, a2, t4        #coloca o Blue e Alpha (já preparados) no registro
+    slli t5, a1, 24      #desloca o gray value (a1) 24 bits para a esquerda para preparar o Red
+    or a2, a2, t5        #coloca Red, Green, Blue e Alpha no registro a2
+    mv a0, s7            #coloca o valor da linha em a0
+    mv a1, s6            #coloca o valor da coluna em a1
+    jal set_pixel        #chama a set_pixel
+    addi s7, s7, 1       #incrementa o índice da coluna (j)
+    j coluna_loop        #volta para o início do loop de coluna
     proxima_linha:
-    # Incrementa a linha e reinicia o loop de colunas
-    addi t0, t0, 1           # Incrementa o índice da linha (i)
-    j linha_loop             # Volta para o início do loop de linha
-
-
-
-
-
-
-
-
-
-    acabou:
-    lw ra, 0(sp)    #pega o valor de ra da pilha
-    addi sp, sp, 4  #incrementa sp
+    addi s6, s6, 1       #incrementa o índice da linha (i)
+    j linha_loop         #volta para o início do loop de linha
+    acabou3:
+    lw ra, 0(sp)         #pega o valor de ra da pilha
+    addi sp, sp, 4       #incrementa sp
+    ret
 
 _start:
     jal open_file   #abre o arquivo e coloca o file descriptor em a0
     mv s1, a0       #coloca o a0 em s1 porque o a0 vai "sujar"
-    li t0, 14       #quantidade de bytes descartáveis apriori
+    li a3, 3        #quantidade de bytes descartáveis apriori
     jal read_file   #le os bytes descartáveis
-    jal get_width
-    mv s2, a1       #coloca a largura em s2
-    jal get_height
-    mv s3, a1       #coloca a altura em s3
-    li t0, 4
+    la a0, col      #argumeto pra get_bytes
+    jal get_bytes   #pega a quant_col e coloca em a1
+    mv a2, a0       
+    la a0, col      #argumento de convert
+    li a1, 0        #arg de convert
+    jal convert_to_number   #chama a função
+    mv s2, a0       #coloca a quant_col em s2
+    la a0, linhas   #argumento pra get_3bytes
+    jal get_bytes   #pega a quant_linhas e coloca em a1  
+    la a0, linhas   #arg de convert
+    li a1, 0        #arg de convet
+    mv a2, t4       #arg de convert
+    jal convert_to_number   #chama a função
+    mv s3, a0       #coloca a quant_linhas em s3
+    li a3, 4        #bytes pra ler o maxval
+    mv a0, s1       #garante que o a0 vai estar certo
     jal read_file   #le o maxval
-    li s4, 255      #coloca o maxval em s4
-    jal percorre_matriz
-    jal set_canvas_size
-    jal close
-    jal exit
-    //agr sim posso ler a matriz
+    jal set_canvas_size #chama a função
+    jal percorre_matriz #chama a função
+    jal close       #chama função
+    jal exit        #chama função
 
