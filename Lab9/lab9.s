@@ -41,8 +41,8 @@ write2:
 
 write3: 
     li a0, 1                #file descriptor = 1 (stdout)
-    la a1, output3          #buffer
-    li a2, 4                #size
+    la a1, output2          #buffer
+    li a2, 3                #size
     li a7, 64               #syscall write (64)
     ecall
     ret                     #retorno da função 
@@ -83,7 +83,7 @@ convert_to_string:
     laco2:
         beq a0, t0, fim        #confere se o número já é igual a zero(fim do laço)
         remu t3, a0, t2        #pega o resto da divisão por 10
-        add t3, t3 ,'0'        #t3 recebe ele mesmo mais o caractere 0 pra transformar em string
+        addi t3, t3 ,'0'        #t3 recebe ele mesmo mais o caractere 0 pra transformar em string
         sb t3, 0(a1)           #coloco esse byte na posição correta da string
         addi a1, a1, -1
         divu a0, a0, t2        #a0 recebe ele mesmo dividido por 10
