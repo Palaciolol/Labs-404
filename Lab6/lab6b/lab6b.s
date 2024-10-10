@@ -2,7 +2,7 @@
 
 //function to read data from standart input
 .section .data
-    input:     .space 31  #buffer
+    input:     .space 20  #buffer
     Yb:        .space 4   #ordenada de b
     Xc:        .space 4   #absissa de c
     time:      .space 4   #tempo geral
@@ -16,7 +16,6 @@ read:
     mv a2, a0
     li a0, 0                #file descriptor = 0 (stdin)
     la a1, input           #buffer to read the data
-    li a2, 11               #size (reads only 5 bytes)
     li a7, 63               #syscall read (63)
     ecall
     ret                     #retorno da função
@@ -25,7 +24,7 @@ read:
 //function to write data on the standart output
 write: 
     li a0, 1                #file descriptor = 1 (stdout)
-    la a1, output           #buffer
+    la a1, output          #buffer
     li a2, 12               #size
     li a7, 64               #syscall write (64)
     ecall
@@ -45,7 +44,7 @@ convert_to_string:
     li t0, 0        #variável de fim de laço
     li t1, 0        #variável contadora
     li t2, 10       #variável que guarda o valor 10
-    li t5, 5        #variável que guarda o valor 4
+    li t5, 4        #variável que guarda o valor 4
     //add t4, a1, a2  #t4 = endereço base da string(a1) + a2(onde eu devo começar a por os valores) - t1(variável contadora)
     add a1, a1, a2
     laco3:
@@ -113,19 +112,22 @@ slice_string:       #função pra dar slice na string
     finish:
         ret
 
-negative_number:
+negative_number_y:
     li t2, -1
-    mul a1, a1, t2
-
-negative_number2:
-    li t2, -1
+    la t0, output
+    li t1, '-'
+    sb t1, 6(t0)
     mul s8, s8, t2
-    li s10, -1
+    j check_positive_or_neg_x
 
-negative_number3:
+negative_number_x:
     li t2, -1
+    la t0, output
+    li t1, '-'
+    sb t1, 0(t0)
     mul s9, s9, t2
-    li s11, -1
+    j continuation_here
+    
 
 calculate_y:
     li t1, 2
@@ -134,6 +136,7 @@ calculate_y:
     sub t0, t0, s6 #t0 = t0 - Db²
     div t0, t0, t1
     div t0, t0, s1
+    ret
 
 
 calculate_x:
@@ -143,54 +146,75 @@ calculate_x:
     sub t0, t0, s7 #t0 = t0 - Dc²
     div t0, t0, t1
     div t0, t0, s2
+    ret
 
-put_minus:
+positive_number_x:
     la t0, output
-    li t1, '-'
+    li t1, '+'
     sb t1, 0(t0)
+    j continuation_here
 
-put_minus2:
+positive_number_y:
     la t0, output
-    li t1, '-'
+    li t1, '+'
     sb t1, 6(t0)
+    j check_positive_or_neg_x
+
+check_positive_or_neg_y:
+    li t0, 0
+    blt s8, t0, negative_number_y
+    jal positive_number_y
+
+check_positive_or_neg_x:
+    li t0, 0
+    blt s9, t0, negative_number_x
+    jal positive_number_x
+
+
 
 _start: 
-    li a0, 11
-    jal read
-    li a0, 1
-    li a1, 5
-    la t0, input
-    la t1, Yb
-    jal slice_string
-    la a0, Yb
-    li a1, 0
-    jal convert_to_number
-    la t0, input
-    lb t1, 0(t0)
-    li t2, 45
-    beq t1, t2, negative_number
+    li a0, 12   #argumento do read
+    jal read    #chama a read
+    li a0, 1    #de onde o input vai começar a ser cortado
+    li a1, 5    #fim do corte do input
+    la t0, input    #endereço do input
+    la t1, Yb       #endereço onde eu vou salvar o corte do input
+    jal slice_string    #finalmente chama a slice string
+    la a0, Yb       #argumento 
+    li a1, 0        #argumento
+    jal convert_to_number   #chama a função
+    la t0, input    #pega o endereço do input
+    lb t1, 0(t0)    #pega o primeiro byte do input
+    li t2, '-'      #negativo
+    bne t1, t2, positive_number
+    li t2, -1
+    mul a1, a1, t2
+    positive_number:
     #no final disso aq, o a1 tem o valor de Yb
     #que eu vou passsar pra s1 pra guardar 
     mv s1, a1 #s1 = Yb(COM SINAL)
     //////////////////////////////////////////
-    li a0, 7
-    li a1, 11
-    la t0, input
-    la t1, Xc
-    jal slice_string
-    la a0, Xc
-    li a1, 0
+    li a0, 7    #posição start do slice
+    li a1, 11   #final do slice
+    la t0, input    #argumento do slice
+    la t1, Xc       #argumento do slice
+    jal slice_string    #slice
+    la a0, Xc   #argumento do convert_to_number
+    li a1, 0    #convert_to_number
     jal convert_to_number
-    la t0, input
+    la t0, input    
     lb t1, 6(t0)
-    li t2, 45
-    beq t1, t2, negative_number
+    li t2, '-'
+    bne t1, t2, positive_number2
+    li t2, -1
+    mul a1, a1, t2
+    positive_number2:
     mv s2, a1 #s2 = Xc (COM SINAL)
     //////////////////////////////////////////
     li a0, 20
     jal read
-    li a0, 12
-    li a1, 16
+    li a0, 0
+    li a1, 4
     la t0, input
     la t1, time
     jal slice_string
@@ -199,8 +223,8 @@ _start:
     jal convert_to_number
     mv s3, a1 #COLOCA O TEMPO DE A em S3
     //////////////////////////////////////////////
-    li a0, 27
-    li a1, 31
+    li a0, 15
+    li a1, 19
     la t0, input
     la t1, timeR
     jal slice_string
@@ -208,16 +232,14 @@ _start:
     li a1, 0
     jal convert_to_number
     mv s4, a1   #COLOCA O TEMPO DE R EM S4
-    sub s4, s4, s3
+    sub t1, s4, s3
     li t0, 3
-    mul s5, t0, s4
+    mul s5, t0, t1
     li t0, 10
-    divu s5, s5, t0 #s5 GUARDA O VALOR DE D-a
+    div s5, s5, t0 #s5 GUARDA O VALOR DE D-a
     ///////////////////////////////////////////////////
-    li a0, 20
-    jal read
-    li a0, 17
-    li a1, 21
+    li a0, 5
+    li a1, 9
     la t0, input
     la t1, time
     jal slice_string
@@ -225,16 +247,14 @@ _start:
     li a1, 0
     jal convert_to_number
     mv s3, a1 #COLOCA O TEMPO DE B em S3
-    sub s4, s4, s3
+    sub t1, s4, s3
     li t0, 3
-    mul s6, t0, s4
+    mul s6, t0, t1
     li t0, 10
-    divu s6, s6, t0 #s5 GUARDA O VALOR DE D-b
+    div s6, s6, t0 #s5 GUARDA O VALOR DE D-b
     //////////////////////////////////////////////////
-    li a0, 20
-    jal read
-    li a0, 22
-    li a1, 26
+    li a0, 10
+    li a1, 14
     la t0, input
     la t1, time
     jal slice_string
@@ -242,45 +262,37 @@ _start:
     li a1, 0
     jal convert_to_number
     mv s3, a1 #COLOCA O TEMPO DE C em S3
-    sub s4, s4, s3
+    sub t1, s4, s3
     li t0, 3
-    mul s7, t0, s4
+    mul s7, t0, t1
     li t0, 10
-    divu s7, s7, t0 #s5 GUARDA O VALOR DE D-c
+    div s7, s7, t0 #s5 GUARDA O VALOR DE D-c
     #agr eu tenho tudo, só jogar na fórmula
     mul s5, s5, s5      #FAZENDO a distância de A ao quadrado
     mul s6, s6, s6      #FAZENDO a distância de B ao quadrado
     mul s7, s7, s7      #Fazendo a distância de C ao quadrado
-
+    ////////////////////////////////////////////////
     jal calculate_y     #retorna o valor de y em t0
-    mv s8, t0
+    mv s8, t0           #salva valor de y em s8(COM SINAL)
     jal calculate_x     #retorna o valor de x em t0
-    mv s9, t0
-    li t0, 0
-    blt s8, t0, negative_number2
-    mv a0, s8
-    la a1, output
-    li a2, 4
-    jal convert_to_string
-    ////////////////////////////
-    li t0, 0
-    blt s9, t0, negative_number3
-    mv a0, s9
-    la a1, output
-    li a2, 11
-    jal convert_to_string
-    li t0, -1
-    beq s10, t0, put_minus
-    la t0, output
-    li t1, '+'
-    sb t1, 0(t0)
-    li t0, -1
-    beq s11, t0, put_minus2
-    la t0, output
-    li t1, '+'
-    sb t1, 6(t0)
-    li t1, ' '
-    sb t1, 5(t0)
-    jal write
-    jal exit
+    mv s9, t0           #salva valor de x em s9(COM SINAL)
+    jal check_positive_or_neg_y
+    continuation_here:
+        mv a0, s8
+        la a1, output
+        li a2, 10
+        jal convert_to_string
+        ////////////////////////////
+        mv a0, s9
+        la a1, output
+        li a2, 4
+        jal convert_to_string
+        ///////////////////////
+        la t0, output
+        li t1, ' '
+        sb t1, 5(t0)
+        li t1, '\n'
+        sb t1, 11(t0)
+        jal write
+        jal exit
 

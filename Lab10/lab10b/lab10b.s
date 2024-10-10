@@ -158,18 +158,50 @@ gets:
 #a0 --> endereço da raiz da árvore
 #a1 --> valor sendo procurado
 recursive_tree_search:
-    addi sp, sp, -16
-    sw ra, 12(sp)
-    sw a0, 8(sp)
-    sw a1, 4(sp)
+    li t0, 1                #seta o profundidade como 1
+    busca:
+        lw t1, 0(a0)        #carrega o valor do nó em t1
+        beq t1, a1, acabou5 #verifica se achou o número
+        addi sp, sp, -16    #aloca espaço na pilha
+        sw a0, 0(sp)        #guarda o valor de a0 na pilha
+        sw ra, 4(sp)        #guarda o valor de ra na pilha
+        lw a0, 4(a0)        #carrega o nó esquerdo
+        bnez a0, continua_na_esquerda
+        j verifica_direita
 
+        continua_na_esquerda:
+        addi t0, t0, 1      #incrementa a profundidade
+        jal busca           #busca de novo
+        lw a0, 0(sp)        #pega o ponteiro do nó atual
+        lw ra ,4(sp)        #pega o endereço de retorno
+        addi sp, sp, 16
 
+        beqz t0, verifica_direita # Se t0 for 0, busca na direita
+        mv a0, t0             # Se t0 não for 0, passa o resultado para a0
+        ret
 
-    lw ra, 12(sp)
-    lw a0, 8(sp)
-    lw a1, 4(sp)
+        verifica_direita:
+        lw a0, 8(sp)                #restaura pro nó atual
+        lw a0, 8(a0)                #carrega o nó da direita
+        bnez a0, busca_direita      #verifica se o nó direita é nulo, se for diferente de nulo, adentra na direita, busca 2
+        j volta
 
-    ret
+        busca_direita:
+        addi t0, t0, 1      #aumenta a profundidade
+        jal busca           #chama a busca
+        
+        volta:
+        addi t0, t0, -1
+        lw a0, 0(sp)        #pega o ponteiro do nó atual
+        lw ra,  4(sp)       #
+        addi sp, sp, 16
+        ret
+
+        acabou5:
+        mv a0, t0             # Retorna a profundidade encontrada
+        addi sp, sp, 16       # Libera espaço na pilha
+        lw ra, 4(sp)         # Restaura o retorno (ra)
+        ret
 
 
 

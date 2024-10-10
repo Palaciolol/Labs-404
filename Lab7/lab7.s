@@ -22,9 +22,8 @@ read:
     ecall
     ret                     #retorno da função
 
-
 #Function to write data on the standart output
-write: 
+write:
     li a0, 1                #file descriptor = 1 (stdout)
     la a1, output1          #buffer
     li a2, 8                #size
