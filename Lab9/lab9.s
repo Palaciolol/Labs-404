@@ -143,7 +143,7 @@ _start:
     lw t3, 0(t0)        #carrega VAL1
     lw t4, 4(t0)        #carrega VAL2
     add t5, t3, t4      #t5 = VAL1 + VAL2
-    beq t5, a0, found   #se VAL1 + VAL2 == a1, vai para found
+    beq t5, a0, found   #se VAL1 + VAL2 == a0, vai para found
     lw t0, 8(t0)        #carrega o próximo nó
     addi t1, t1, 1      #incrementa o índice
     j loop2              #recomeça o loop
