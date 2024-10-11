@@ -159,29 +159,28 @@ gets:
 #a1 --> valor sendo procurado
 recursive_tree_search:
     li t0, 1                #seta o profundidade como 1
+    li a2, 0
     busca:
         lw t1, 0(a0)        #carrega o valor do nó em t1
-        beq t1, a1, acabou5 #verifica se achou o número
-        addi sp, sp, -16    #aloca espaço na pilha
+        addi sp, sp, -8     #aloca espaço na pilha
         sw a0, 0(sp)        #guarda o valor de a0 na pilha
         sw ra, 4(sp)        #guarda o valor de ra na pilha
         lw a0, 4(a0)        #carrega o nó esquerdo
+        beq t1, a1, acabou5 #verifica se achou o número
         bnez a0, continua_na_esquerda
         j verifica_direita
 
         continua_na_esquerda:
         addi t0, t0, 1      #incrementa a profundidade
         jal busca           #busca de novo
+        bnez a2 , volta
         lw a0, 0(sp)        #pega o ponteiro do nó atual
-        lw ra ,4(sp)        #pega o endereço de retorno
-        addi sp, sp, 16
-
-        beqz t0, verifica_direita # Se t0 for 0, busca na direita
-        mv a0, t0             # Se t0 não for 0, passa o resultado para a0
-        ret
+        //lw ra ,4(sp)      #pega o endereço de retorno
+        addi t0, t0, -1
+        
 
         verifica_direita:
-        lw a0, 8(sp)                #restaura pro nó atual
+        lw a0, 0(sp)
         lw a0, 8(a0)                #carrega o nó da direita
         bnez a0, busca_direita      #verifica se o nó direita é nulo, se for diferente de nulo, adentra na direita, busca 2
         j volta
@@ -189,21 +188,32 @@ recursive_tree_search:
         busca_direita:
         addi t0, t0, 1      #aumenta a profundidade
         jal busca           #chama a busca
+        bnez a2, volta
+        lw a0, 0(sp)
+        addi t0, t0, -1
         
         volta:
-        addi t0, t0, -1
-        lw a0, 0(sp)        #pega o ponteiro do nó atual
-        lw ra,  4(sp)       #
-        addi sp, sp, 16
+        
+        lw ra,  4(sp)       #pega o ra da pilha
+        addi sp, sp, 8      #desaloca espaço
+        li t1, 1
+        beq t0, t1, gam
+        ret
+
+        gam:
+        beqz a2, biarra
+        ret
+
+        biarra:
+        mv a0, a2
         ret
 
         acabou5:
+        li a2, 1
         mv a0, t0             # Retorna a profundidade encontrada
-        addi sp, sp, 16       # Libera espaço na pilha
         lw ra, 4(sp)         # Restaura o retorno (ra)
+        addi sp, sp, 8
         ret
-
-
 
 exit:
     li a0, 0           #isso daqui é pra finalizar o programa
