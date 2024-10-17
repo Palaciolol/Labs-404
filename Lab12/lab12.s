@@ -119,7 +119,7 @@ puts:
         addi a1, a1, 1
         j loop3
     acabou2:
-        la t0, '\n'
+        li t0, '\n'
         sb t0, 0(a1)
         jal write2
         lw ra, 0(sp)         #pega o valor de ra da pilha
