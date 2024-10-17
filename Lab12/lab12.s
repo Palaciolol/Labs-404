@@ -4,35 +4,18 @@
 .section .data
     input:        .space 400  #número a ser lido
     output:       .space 400  #output
-
+    
 .section .text
 .align 2
+.set port_adress, 0xFFFF0100
 
-#Use as input a0 for the amount of bytes to be read
-read: 
-    mv a2, a0
-    li a0, 0               #file descriptor = 0 (stdin)
-    la a1, input           #buffer to read the data
-    li a7, 63              #syscall read (63)
-    ecall
-    ret                    #retorno da função
 
 read2: 
     li a0, 0                #file descriptor = 0 (stdin)
     li a2, 1                #vou ler 1 byte
     li a7, 63               #syscall read (63)
-    ecall
+    ecall                   #syscall
     ret                     #retorno da função
-
-
-#Function to write data on the standart output
-write: 
-    li a0, 1                #file descriptor = 1 (stdout)
-    la a1, input            #buffer
-    li a2, 6                #size
-    li a7, 64               #syscall write (64)
-    ecall
-    ret                     #retorno da função 
 
 
 //function to write data on the standart output
@@ -40,15 +23,15 @@ write2:
     li a0, 1                #file descriptor = 1 (stdout)
     li a2, 1                #size
     li a7, 64               #syscall write (64)
-    ecall
+    ecall                   #syscall
     ret                     #retorno da função 
-
 
 exit:
     li a0, 0           #isso daqui é pra finalizar o programa
     li a7, 93          #syscall de exit
-    ecall
+    ecall              #syscall
 
+/*
 #a0 --> endereço que vai salvar os bytes
 gets:
     addi sp, sp, -16
@@ -60,6 +43,30 @@ gets:
     jal read2        #leio um byte
     lbu t1, 0(a1)    #carrego esse byte que eu acabei de ler
     beq t1, t0, sai 
+    addi a1, a1, 1
+    j loop
+    sai:
+    sb zero, 0(a1)
+    lw ra, 0(sp)         #pega o valor de ra da pilha
+    lw a0, 4(sp)
+    addi sp, sp, 16       #incrementa sp
+    ret
+*/
+#a0 --> endereço que vai salvar os bytes
+gets2:
+    addi sp, sp, -16
+    sw ra, 0(sp)
+    sw a0, 4(sp)
+    mv a1, a0       #move o endereço que vai salvar os bytes pra a1
+    li t0, '\n'     #\n
+    loop:
+    li s6, port_adress      #pega o endereço do bagulho
+    li t2, 1                #t2 = 1
+    sb t2, 0x02(s6)         #seta como 1
+    #jal read2              #leio um byte
+    lbu t1, 0x03(s6)        #carrego esse byte que eu acabei de ler
+    beq t1, t0, sai         #verifica se o byte é o \n
+    sb t1, 0(a1)            #coloco esse byte no endereço certo
     addi a1, a1, 1
     j loop
     sai:
@@ -105,7 +112,7 @@ strlen:
         mv a0, t0       #coloca o tamanho em a0
         ret
 
-
+/*
 #a0 tem o endereço da string que é pra printar
 puts:
     addi sp, sp, -16
@@ -125,6 +132,35 @@ puts:
         lw ra, 0(sp)         #pega o valor de ra da pilha
         addi sp, sp, 16      #incrementa sp
         ret
+*/
+
+
+#a0 tem o endereço da string que é pra printar
+puts2:
+    addi sp, sp, -16
+    sw ra, 0(sp)
+    mv a1, a0   #coloca o endereço que vou printar em a1
+    li t0, 0    #caractere '\0' , final de string
+    loop3:
+        li s6, port_adress  #carrega o endereço base 
+        lb t1, 0(a1)        #carrega o byte que é pra printar
+        beq t1, t0, acabou2 #byte = '\0'
+        sb t1, 0x01(s6)     #coloca esse byte no endereço pra printar
+        li t2, 1            
+        sb t2, 0(s6)
+        addi a1, a1, 1
+        j loop3
+    acabou2:
+        li s6, port_adress  #carrega o endereço base
+        li t0, '\n'
+        sb t0, 0x01(s6)
+        li t2, 1
+        sb t2, 0(s6)
+        lw ra, 0(sp)         #pega o valor de ra da pilha
+        addi sp, sp, 16      #incrementa sp
+        ret
+
+
 
 #a0 --> endereço da string
 atoi:
@@ -135,10 +171,10 @@ atoi:
     li t6, '*'
     li a1, 0
     li a2, 0
-    #lb t5, 0(a0)                #t5 = valor da memória da string no endereço a0
-    #bne t5, t4, laco            #se tiver um menos, eu seto uma flag
-    #li t6, -1
-    #addi a0, a0, 1
+    lb t5, 0(a0)                #t5 = valor da memória da string no endereço a0
+    bne t5, t4, laco            #se tiver um menos, eu seto uma flag
+    li t6, -1
+    addi a0, a0, 1
     laco:
         lb t5, 0(a0)
         beq t5, zero, acabou    #se o byte caregado for um \0, acabou
@@ -154,14 +190,14 @@ atoi:
         j laco
         
     acabou:
-        #li t0, -1
-        #beq t6, t0, negativo
-        #j cont3
-        #negativo:
-        #neg a1, a1
-        #mv a0, a1
-        #ret
-        #cont3:
+        li t0, -1
+        beq t6, t0, negativo
+        j cont3
+        negativo:
+        neg a1, a1
+        mv a0, a1
+        ret
+        cont3:
         mv a0, a1
         mv a1, t5
         ret    
@@ -183,15 +219,16 @@ itoa:
     li t0, 0             #variável de fim de laço
     li t2, 10            #eu suponho que a base é 10
     mv t3, a0            #coloco o número a ser convertido em t3
-    bne a2, t2, base_16
     blt a0, t0, menor_que_zero
+    bne a2, t2, base_16
     j loop_aux
     menor_que_zero:
     li t5, '-'
     sb t5, 0(a1)
     neg t3, t3
     neg a0, a0
-    addi a1, a1, 1 
+    addi a1, a1, 1
+    bne a2, t2, base_16 
     j loop_aux
     base_16:
     li t2, 16
@@ -218,42 +255,42 @@ itoa:
         divu a0, a0, t2        #a0 recebe ele mesmo dividido pela base
         j laco2                #pula pro laço de novo
     fim:
-        lw a0, 0(sp)         #pega o valor de ra da pilha
+        lw a0, 0(sp)         #pega o valor de a0 da pilha
         addi sp, sp, 16      #incrementa sp
         ret
 
 
 ope1:
     la a0, input
-    jal gets
-    jal puts
+    jal gets2
+    jal puts2
     j finaliza
 
 
 ope2:
     la a0, input
-    jal gets
+    jal gets2
     jal strlen
     jal invert_string
-    jal puts
+    jal puts2
     j finaliza
 
 
 ope3:
     la a0, input
-    jal gets
+    jal gets2
     jal atoi
     la a1, output
     li a2, 16
     jal itoa
-    jal puts
+    jal puts2
     j finaliza
 
 
 
 ope4:
     la a0 , input
-    jal gets
+    jal gets2
     jal atoi
     #a0 vai ter o número e a1 o sinal
     mv s0, a0   #s0 guarda o primeiro número
@@ -278,7 +315,7 @@ ope4:
         la a1, output
         li a2, 10
         jal itoa
-        jal puts 
+        jal puts2 
         j finaliza
 
     adicao:
@@ -287,7 +324,7 @@ ope4:
         la a1, output
         li a2, 10
         jal itoa
-        jal puts
+        jal puts2
         j finaliza
     
     multiplica:
@@ -296,7 +333,7 @@ ope4:
         la a1, output
         li a2, 10
         jal itoa
-        jal puts
+        jal puts2
         j finaliza
     
     divide:
@@ -305,13 +342,13 @@ ope4:
         la a1, output
         li a2, 10
         jal itoa
-        jal puts
+        jal puts2
         j finaliza
 
 
 _start:
-    li a0, 2    #lê dois bytes
-    jal read    #chama a read
+    la a0, input   #lê dois bytes
+    jal gets2
     li s1, '1'    
     li s2, '2'
     li s3, '3'
