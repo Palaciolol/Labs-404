@@ -81,8 +81,9 @@ invert_string:
         addi a2, a2, 1
         addi a0, a0, -1
         beqz a0, cabou
+        j loop2
     cabou:
-        sb zero, 1(a2)
+        sb zero, 0(a2)
         la a0, output
         ret
 
@@ -127,24 +128,24 @@ puts:
 
 #a0 --> endereço da string
 atoi:
-    li t2, 10
-    li t4, '-'
-    li t3, '+'
-    li t6, '*'
     li t1, '/'
+    li t2, 10
+    li t3, '+'
+    li t4, '-'
+    li t6, '*'
     li a1, 0
-    lb t5, 0(a0)                #t5 = valor da memória da string no endereço a0
-    bne t5, t4, laco            #se tiver um menos, eu seto uma flag
-    li t6, -1
-    addi a0, a0, 1
     li a2, 0
+    #lb t5, 0(a0)                #t5 = valor da memória da string no endereço a0
+    #bne t5, t4, laco            #se tiver um menos, eu seto uma flag
+    #li t6, -1
+    #addi a0, a0, 1
     laco:
         lb t5, 0(a0)
         beq t5, zero, acabou    #se o byte caregado for um \0, acabou
-        beq t5, t4, acabou      
-        beq t5, t3, acabou
-        beq t5, t6, acabou      
-        beq t5, t1, acabou
+        beq t5, t4, acabou      #se o byte carregado for '-'
+        beq t5, t3, acabou      #se o byte carregado for '+'
+        beq t5, t6, acabou      #se o byte carregado for '*'
+        beq t5, t1, acabou      #se o byte carregado for '/'
         mul a1, a1, t2          #multiplica a1 por 10 e salva em a1
         addi t5, t5, -'0'       #converte t2 para valor numérico
         add a1, a1, t5          #a1 = a1 + t5
@@ -153,14 +154,14 @@ atoi:
         j laco
         
     acabou:
-        li t0, -1
-        beq t6, t0, negativo
-        j cont3
-        negativo:
-        neg a1, a1
-        mv a0, a1
-        ret
-        cont3:
+        #li t0, -1
+        #beq t6, t0, negativo
+        #j cont3
+        #negativo:
+        #neg a1, a1
+        #mv a0, a1
+        #ret
+        #cont3:
         mv a0, a1
         mv a1, t5
         ret    
@@ -255,8 +256,8 @@ ope4:
     jal gets
     jal atoi
     #a0 vai ter o número e a1 o sinal
-    mv s0, a0   #a0 guarda o primeiro número
-    mv s1, a1   #a1 guarda o sinal
+    mv s0, a0   #s0 guarda o primeiro número
+    mv s1, a1   #s1 guarda o sinal
     la a0, input
     addi a2, a2, 1
     add a0, a0, a2
@@ -270,29 +271,41 @@ ope4:
     beq t0, s1, multiplica
     li t0, '/'
     beq t0, s1, divide
-    j finaliza
+    #j finaliza
     subtrai:
-        sub a0, s1, s2
+        li a0, 0
+        sub a0, s0, s2
+        la a1, output
+        li a2, 10
         jal itoa
-        jal write2 
+        jal puts 
         j finaliza
 
     adicao:
-        add a0, s1, s2
+        li a0, 0
+        add a0, s0, s2
+        la a1, output
+        li a2, 10
         jal itoa
-        jal write2
+        jal puts
         j finaliza
     
     multiplica:
-        mul a0, s1, s2
+        li a0, 0
+        mul a0, s0, s2
+        la a1, output
+        li a2, 10
         jal itoa
-        jal write2
+        jal puts
         j finaliza
     
     divide:
-        div a0, s1, s2
+        li a0, 0
+        div a0, s0, s2
+        la a1, output
+        li a2, 10
         jal itoa
-        jal write2
+        jal puts
         j finaliza
 
 
