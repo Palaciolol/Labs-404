@@ -10,22 +10,6 @@
 .set port_adress, 0xFFFF0100
 
 
-read2: 
-    li a0, 0                #file descriptor = 0 (stdin)
-    li a2, 1                #vou ler 1 byte
-    li a7, 63               #syscall read (63)
-    ecall                   #syscall
-    ret                     #retorno da função
-
-
-//function to write data on the standart output
-write2: 
-    li a0, 1                #file descriptor = 1 (stdout)
-    li a2, 1                #size
-    li a7, 64               #syscall write (64)
-    ecall                   #syscall
-    ret                     #retorno da função 
-
 exit:
     li a0, 0           #isso daqui é pra finalizar o programa
     li a7, 93          #syscall de exit
@@ -33,27 +17,7 @@ exit:
 
 
 #a0 --> endereço que vai salvar os bytes
-gets:
-    addi sp, sp, -16
-    sw ra, 0(sp)
-    sw a0, 4(sp)
-    mv a1, a0       #move o endereço que vai salvar os bytes pra a1
-    li t0, '\n'     #\n
-    1:
-    jal read2        #leio um byte
-    lbu t1, 0(a1)    #carrego esse byte que eu acabei de ler
-    beq t1, t0, 1f 
-    addi a1, a1, 1
-    j 1b
-    1:
-    sb zero, 0(a1)
-    lw ra, 0(sp)         #pega o valor de ra da pilha
-    lw a0, 4(sp)
-    addi sp, sp, 16       #incrementa sp
-    ret
-
-#a0 --> endereço que vai salvar os bytes
-gets2:
+gets_serial:
     addi sp, sp, -16        #aloca espaço na pilha
     sw ra, 0(sp)            #salva o ra
     sw a0, 4(sp)            #salva o a0
@@ -84,15 +48,15 @@ gets2:
 #a1 ta com o ponteiro , que ta no final
 invert_string:  
     la a2, output   #endereço do output
-    loop2:
+    1:
         lbu t1, 0(a1)
         sb t1, 0(a2)
         addi a1, a1, -1
         addi a2, a2, 1
         addi a0, a0, -1
-        beqz a0, cabou
-        j loop2
-    cabou:
+        beqz a0, 1f
+        j 1b
+    1:
         sb zero, 0(a2)
         la a0, output
         ret
@@ -103,68 +67,48 @@ strlen:
     li t0, 0    #var contadora
     mv a1, a0   #coloca o endereço em a1
     li t1, 0
-    loop4:
+    1:
         lbu t2, 0(a1)        #carrega o o byte
-        beq t1, t2, cabo    #verifica se chegou no '\0'
+        beq t1, t2, 1f    #verifica se chegou no '\0'
         addi a1, a1, 1      #incrementa o ponteiro
         addi t0, t0, 1      #incremeta a var contadora
-        j loop4
+        j 1b
 
-    cabo:
+    1:
         addi a1, a1, -1
         mv a0, t0       #coloca o tamanho em a0
         ret
 
 
 #a0 tem o endereço da string que é pra printar
-puts:
-    addi sp, sp, -16
-    sw ra, 0(sp)
-    mv a1, a0   #coloca o endereço que vou printar em a1
-    1:
-        lb t1, 0(a1)
-        beqz t1 ,1f
-        jal write2
-        addi a1, a1, 1
-        j 1b
-    1:
-        li t0, '\n'
-        sb t0, 0(a1)
-        jal write2
-        lw ra, 0(sp)         #pega o valor de ra da pilha
-        addi sp, sp, 16      #incrementa sp
-        ret
-
-
-
-#a0 tem o endereço da string que é pra printar
-puts2:
+puts_serial:
     addi sp, sp, -16            #aloca espaço na pilha
     sw ra, 0(sp)                #salva o ra na pilha
     li s6, port_adress          #carrega o endereço base 
-    loop3_puts2:
+    1:
         lbu t1, 0(a0)           #carrega o byte que é pra printar
-        beqz t1, acabou2_puts2        #byte = '\0'
+        beqz t1, 1f             #byte = '\0'
         sb t1, 0x01(s6)         #coloca esse byte no endereço pra printar
         li t2, 1                #t2 = 1 
         sb t2, 0(s6)            #trigger pra printar
-        1:
+        2:
         lbu t2, 0(s6)
-        bnez t2, 1b
+        bnez t2, 2b
+
         addi a0, a0, 1
-        j loop3_puts2
-    acabou2_puts2:
+        j 1b
+    1:
         li t0, '\n'
         sb t0, 0x01(s6)
         li t2, 1
         sb t2, 0(s6)
-        1:
+        3:
         lbu t2, 0(s6)
-        bnez t2, 1b
+        bnez t2, 3b
+
         lw ra, 0(sp)            #pega o valor de ra da pilha
         addi sp, sp, 16         #incrementa sp
         ret
-
 
 
 #a0 --> endereço da string
@@ -174,37 +118,35 @@ atoi:
     li t3, '+'
     li t4, '-'
     li t6, '*'
-    li a1, 0                    #número 
-    li a2, 1                    #var contadora que vai ser útil
+    li a1, 0                    #número
+    li a2, 2                    #var contadora que vai ser útil
+    li a3, ' '
     lbu t5, 0(a0)               #t5 = valor da memória da string no endereço a0
-    bne t5, t4, laco            #se tiver um menos, eu seto uma flag
+    bne t5, t4, 1f              #se tiver um menos, eu seto uma flag
     li t0, -1                   #flag que o número é negativo
     addi a0, a0, 1              #incrementa o endereço
     addi a2, a2, 1
-    laco:
+    1:
         lbu t5, 0(a0)           #carrega o byte em t5
-        beqz t5, acabou         #se o byte caregado for um \0, acabou
-        beq t5, t4, acabou      #se o byte carregado for '-'
-        beq t5, t3, acabou      #se o byte carregado for '+'
-        beq t5, t6, acabou      #se o byte carregado for '*'
-        beq t5, t1, acabou      #se o byte carregado for '/'
+        beqz t5, 1f             #se o byte caregado for um \0, acabou
+        beq t5, t4, 1f          #se o byte carregado for '-'
+        beq t5, t3, 1f          #se o byte carregado for '+'
+        beq t5, t6, 1f          #se o byte carregado for '*'
+        beq t5, t1, 1f          #se o byte carregado for '/'
+        beq t5, a3, eh_space          #se for espaço eu ignoro
         mul a1, a1, t2          #multiplica a1 por 10 e salva em a1
         addi t5, t5, -'0'       #converte t2 para valor numérico
         add a1, a1, t5          #a1 = a1 + t5
+        eh_space:
         addi a0, a0, 1          #a0 = a0 + 1
         addi a2, a2, 1          #a2 += 1
-        j laco
+        j 1b
         
-    acabou:
+    1:
         li t1, -1               #temporário pra comparar com a flag
-        beq t1, t0, negativo    #verifica se o número é negativo
-        j cont3     
-        negativo:
+        bne t1, t0, positivo    #verifica se o número é negativo
         neg a1, a1              #transforma a1 em negativo             
-        mv a0, a1               #coloca o valor em a0
-        mv a1, t5               #coloca o possível sinal em a1
-        ret
-        cont3:
+        positivo:
         mv a0, a1               #coloca o valor em a0
         mv a1, t5               #coloca o possível sinal em a1
         ret    
@@ -215,89 +157,88 @@ atoi:
 itoa:
     addi sp, sp, -16     #aloca espaço na pilha
     sw a1, 0(sp)         #guarda o endereço da string na pilha
-    bnez a0, cont4       #verifica se o número é 0
+    bnez a0, cont        #verifica se o número é 0
     li t0, '0'           #carectere '0'               
     sb t0, 0(a1)         #coloca o '0' em a1
     sb zero, 1(a1)       #coloca o '\0' em a1
     lw a0, 0(sp)         #pega o valor de ra da pilha
     addi sp, sp, 16      #incrementa sp
     ret
-    cont4:
+    cont:
     li t0, 0                    #variável de fim de laço
     li t2, 10                   #eu suponho que a base é 10
     mv t3, a0                   #coloco o número a ser convertido em t3
     bne a2, t2, base_16         #verifica se é base 16
     blt a0, t0, menor_que_zero  #verifico se o número é menor que zero
-    j loop_aux
+    j 1f
     menor_que_zero:
     li t5, '-'
     sb t5, 0(a1)
     neg t3, t3
     neg a0, a0
     addi a1, a1, 1
-    j loop_aux
+    j 1f
     base_16:
     li t2, 16
-    loop_aux:
-    beqz t3,  cont
+    1:
+    beqz t3,  cont2
     addi a1, a1, 1
     divu t3, t3, t2
-    j loop_aux
-    cont:
+    j 1b
+    cont2:
     sb zero, 0(a1)
     addi a1, a1, -1
-    laco2:
+    2:
         li t1, 10
-        beq a0, zero, fim      #confere se o número já é igual a zero(fim do laço)
+        beq a0, zero, 2f      #confere se o número já é igual a zero(fim do laço)
         remu t3, a0, t2        #pega o resto da divisão pela base
         bge t3, t1, soma_55    #confere se o número é maior ou igual a 10
         addi t3, t3 ,'0'       #t3 recebe ele mesmo mais o caractere 0 pra transformar em string
-        j cont2
+        j cont3
         soma_55:
         addi t3, t3, 'A'- 10
-        cont2:
+        cont3:
         sb t3, 0(a1)           #coloco esse byte na posição correta da string
         addi a1, a1, -1        #subtrai a1
         divu a0, a0, t2        #a0 recebe ele mesmo dividido pela base
-        j laco2                #pula pro laço de novo
-    fim:
+        j 2b               #pula pro laço de novo
+    2:
         lw a0, 0(sp)         #pega o valor de a0 da pilha
         addi sp, sp, 16      #incrementa sp
         ret
 
 
-
 ope1:
     la a0, input
-    jal gets2
-    jal puts2
-    j finaliza
+    jal gets_serial
+    jal puts_serial
+    j exit
 
 
 ope2:
     la a0, input
-    jal gets2
+    jal gets_serial
     jal strlen
     jal invert_string
-    jal puts2
-    j finaliza
+    jal puts_serial
+    j exit
 
 
 ope3:
     la a0, input
-    jal gets2
+    jal gets_serial
     jal atoi
     la a1, output
     li a2, 16
     jal itoa
-    jal puts2
-    j finaliza
+    jal puts_serial
+    j exit
 
 
 
 ope4:
     la a0 , input       #carrega o endereço de input
-    jal gets2           #lê o input até o \n
+    jal gets_serial           #lê o input até o \n
     jal atoi            #chama a asci to int
     mv s0, a0           #s0 guarda o primeiro número
     mv s1, a1           #s1 guarda o sinal
@@ -308,7 +249,7 @@ ope4:
     mv s2, a0           #s2 vai ter o segundo número
     li t0, '-'         
     beq t0, s1, subtrai
-    li t0, '+'
+    li t0, '+'        
     beq t0, s1, adicao
     li t0, '*'
     beq t0, s1, multiplica
@@ -319,41 +260,36 @@ ope4:
         la a1, input        #a1 recebe o endereço do output
         li a2, 10           #base 10
         jal itoa            #int to ascii
-        la a0, input
-        jal puts2           #printa
-        j finaliza
+        jal puts_serial          #printa
+        j exit
 
     adicao:
         add a0, s0, s2
         la a1, input
         li a2, 10
         jal itoa
-        la a0, input
-        jal puts2
-        j finaliza
+        jal puts_serial
+        j exit
     
     multiplica:
         mul a0, s0, s2
-        la a1, input
+        la a1, input   
         li a2, 10
         jal itoa
-        la a0, input
-        jal puts2
-        j finaliza
+        jal puts_serial
+        j exit
     
     divide:
         div a0, s0, s2
         la a1, input
         li a2, 10
         jal itoa
-        la a0, input
-        jal puts2
-        j finaliza
-
+        jal puts_serial
+        j exit
 
 _start:
     la a0, input    #endereço pra salvar o input
-    jal gets2      #lê o input
+    jal gets_serial       #lê o input
     li s1, '1'    
     li s2, '2'
     li s3, '3'
@@ -363,5 +299,3 @@ _start:
     beq s2, s5, ope2
     beq s3, s5, ope3
     beq s4, s5, ope4
-    finaliza:
-    jal exit
