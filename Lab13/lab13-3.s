@@ -2,20 +2,9 @@
 
 //function to read data from standart input
 .data
-    a:  .word 1      
-    b:  .word -2     
-    c:  .half 3
-    d:  .half -4
-    e:  .byte 5
-    f:  .byte -6
-    g:  .word 7
-    h:  .word -8
-    i:  .byte 9
-    j:  .byte -10
-    k:  .half 11
-    l:  .half -12
-    m:  .word 13
-    n:  .word -14
+    ints:  .word 1, -2, 7, -8, 13, -14      
+    shorts:  .half 3, -4, 11, -12     
+    bytes:  .byte 5, -6, 9, -10
     
 .section .text
 .align 2
@@ -30,7 +19,20 @@ mystery_function:
     ret
 
 operation:
-    la t0, a
+    addi sp, sp, -32
+    la t0, ints        
+    la t1, shorts
+    la t2, bytes
+    lw a0, 0(t0)    #a
+    lw a1, 4(t0)    #b
+    lh a2, 0(t1)    #c
+    lh a3, 4(t1)    #d
+    lb a4, 0(t2)    #e
+    lb a5, 4(t2)    #f
+    lw a6, 8(t0)    #g
+    lw a7, 12(t0)   #h
+    lb t0, 8(t2)    #i
+        
     
 
 
