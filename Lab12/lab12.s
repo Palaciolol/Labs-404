@@ -1,20 +1,13 @@
 .globl _start               #this one indicates where the programm begins
 
 //function to read data from standart input
-.section .data
+.bss
     input:        .space 400  #número a ser lido
     output:       .space 400  #output
     
 .section .text
 .align 2
 .set port_adress, 0xFFFF0100
-
-
-exit:
-    li a0, 0           #isso daqui é pra finalizar o programa
-    li a7, 93          #syscall de exit
-    ecall              #syscall
-
 
 #a0 --> endereço que vai salvar os bytes
 gets_serial:
@@ -286,6 +279,12 @@ ope4:
         jal itoa
         jal puts_serial
         j exit
+
+exit:
+    li a0, 0           #isso daqui é pra finalizar o programa
+    li a7, 93          #syscall de exit
+    ecall              #syscall
+
 
 _start:
     la a0, input    #endereço pra salvar o input

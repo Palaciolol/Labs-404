@@ -5,7 +5,7 @@
 .globl puts
 .globl exit
 
-.section .data
+.bss
     input:     .space 400  #buffer
 
 .section .text

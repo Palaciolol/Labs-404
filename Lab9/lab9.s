@@ -1,13 +1,10 @@
 .globl _start               #this one indicates where the programm begins
 
 //function to read data from standart input
-.section .data
+.bss
     input:        .space 7  #número a ser lido
     number:       .space 6  #número sem o sinal
     output:       .space 4  #output
-    output2:      .asciz "oi\n"
-    output3:      .space 4 
-    output4:      .space 2
 
 .section .text
 .align 2
@@ -27,22 +24,6 @@ write:
     li a0, 1                #file descriptor = 1 (stdout)
     la a1, output          #buffer
     li a2, 4                #size
-    li a7, 64               #syscall write (64)
-    ecall
-    ret                     #retorno da função 
-
-write2: 
-    li a0, 1                #file descriptor = 1 (stdout)
-    la a1, output4          #buffer
-    li a2, 2                #size
-    li a7, 64               #syscall write (64)
-    ecall
-    ret                     #retorno da função 
-
-write3: 
-    li a0, 1                #file descriptor = 1 (stdout)
-    la a1, output2          #buffer
-    li a2, 3                #size
     li a7, 64               #syscall write (64)
     ecall
     ret                     #retorno da função 

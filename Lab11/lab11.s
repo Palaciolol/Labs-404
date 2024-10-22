@@ -1,18 +1,10 @@
 .globl _start               #this one indicates where the programm begins
 
-//function to read data from standart input
-.section .data
-    input:        .space 7  #número a ser lido
-
 .section .text
 
 .align 2
 .set car_adress, 0xFFFF0100
 
-exit:
-    li a0, 0           #isso daqui é pra finalizar o programa
-    li a7, 93          #syscall de exit
-    ecall
 
 busy_waiting:
     li t0, 1            #temporário que guarda 1
@@ -39,12 +31,15 @@ waiting:
     li s7, 95000
     li t3, 0
     loop:
-        beq s7, t3, fecha
+        beq s7, t3, exit
         addi t3, t3, 1
         j loop
 
-fecha:
-    jal exit
+exit:
+    li a0, 0           #isso daqui é pra finalizar o programa
+    li a7, 93          #syscall de exit
+    ecall
+
 
 _start:
     li s1, car_adress   #pega o endereço base do carro

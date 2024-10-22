@@ -13,19 +13,10 @@ exit:
     li a7, 93          #syscall de exit
     ecall
 
-SUM1:
-    add a0, a0, a1
-    ret
-
-mystery_function:
-    ret
-
-
-
 #a0 --> first value
 #a1 --> second value 
 #a2 --> third value
-my_function:
+operation:
     addi sp, sp, -16
     sw ra, 0(sp)
     sw a0, 4(sp)
@@ -53,5 +44,5 @@ my_function:
 
 
 _start:
-    jal my_function
+    jal operation
     jal exit

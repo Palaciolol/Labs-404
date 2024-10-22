@@ -1,7 +1,7 @@
 .globl _start               #this one indicates where the programm begins
 
 //function to read data from standart input
-.section .data
+.data
     input:     .space 20  #buffer
     Yb:        .space 4   #ordenada de b
     Xc:        .space 4   #absissa de c

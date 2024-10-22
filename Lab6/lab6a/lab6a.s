@@ -1,7 +1,7 @@
 .globl _start               #this one indicates where the programm begins
 
 //function to read data from standart input
-.section .data
+.bss
     input_address: .space 20  #buffer
     string:        .space 4   #string que vai guardar os números
     output_adress: .space 20  #output 

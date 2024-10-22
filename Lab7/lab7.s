@@ -1,7 +1,7 @@
 .globl _start               #this one indicates where the programm begins
 
 //function to read data from standart input
-.section .data
+.bss
     input:        .space 13  #bits que vão ser codificados
     subset1:       .space 3  #subset teste(d1d2d4)
     subset2:       .space 3  #subset teste(d1d3d4)

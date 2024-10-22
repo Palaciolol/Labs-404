@@ -1,6 +1,6 @@
 .globl _start               #this one indicates where the programm begins
 
-.section .data
+.data
     input:         .space 262159
     col:           .space 3
     linhas:        .space 3
