@@ -1,15 +1,7 @@
 .globl swap_int, swap_short, swap_char              
 
-
 .section .text
 .align 2
-
-
-exit:
-    li a0, 0           #isso daqui é pra finalizar o programa
-    li a7, 93          #syscall de exit
-    ecall
-
 
 #a0 --> ponteiro pro primeiro int
 #a1 --> ponteiro pro segundo int

@@ -3,11 +3,6 @@
 .section .text
 .align 2
 
-exit:
-    li a0, 0           #isso daqui é pra finalizar o programa
-    li a7, 93          #syscall de exit
-    ecall
-
 
 #a0 --> int a
 #a1 --> int b

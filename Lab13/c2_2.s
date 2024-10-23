@@ -3,17 +3,12 @@
 .section .text
 .align 2
 
-exit:
-    li a0, 0           #isso daqui é pra finalizar o programa
-    li a7, 93          #syscall de exit
-    ecall
-
-
 #a0 --> ponteiro pro array de int
 #a1 --> tamanho do array
 middle_value_int:
     srli a1, a1, 1
     add a0, a1 , a0
+    slli a0, a0, 2
     lw a0, 0(a0)
     ret
 
@@ -22,6 +17,7 @@ middle_value_int:
 middle_value_short:
     srli a1, a1, 1
     add a0, a1 , a0
+    slli a0, a0, 1
     lh a0, 0(a0)
     ret
 
@@ -41,6 +37,7 @@ value_matrix:
     li t1, 42
     mul t2, t1, a1  
     add t2, t2, a2
+    slli t2, t2, 2
     add a0, a0,t2
     lw a0, 0(a0)
     ret

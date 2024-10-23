@@ -3,11 +3,6 @@
 .section .text
 .align 2
 
-exit:
-    li a0, 0           #isso daqui é pra finalizar o programa
-    li a7, 93          #syscall de exit
-    ecall
-
 
 #a0 --> int a
 #a1 --> int b
@@ -24,14 +19,14 @@ exit:
 #16(sp) --> int m
 #20(sp) --> int n
 operation:
-    mv t6, ra       #coloca o ra em t6
     lw t0, 20(sp)   #carrega o n
     lw t1, 16(sp)   #carrega o m   
     lw t2, 12(sp)   #carrega o l
     lw t3, 8(sp)    #carrega o k
     lw t4, 4(sp)    #carrega o j
     lw t5, 0(sp)    #carrega o i
-    addi sp, sp, -32    #aloca espaço na pilha    
+
+    addi sp, sp, -36
     sw a0, 0(sp)    #coloca o a0 na pilha
     sw a1, 4(sp)    #coloca o a1 na pilha
     sw a2, 8(sp)    #coloca o a2 na pilha
@@ -40,6 +35,7 @@ operation:
     sw a5, 20(sp)   #coloca o a5 na pilha
     sw a6, 24(sp)   #coloca o a6 na pilha
     sw a7, 28(sp)   #coloca o a7 na pilha
+    sw ra, 32(sp)   #salva o ra na pilha
 
     mv a0, t0       #coloca o valor de n em a0
     mv a1, t1       #coloca o valor de m em a1
@@ -56,8 +52,8 @@ operation:
     lw t3, 8(sp)    #carrega o c da pilha
     lw t4, 4(sp)    #carrega o b da pilha
     lw t5, 0(sp)    #carrega o a da pilha
-
-    addi sp, sp, 32 #desaloca a pilha
+            
+    addi sp, sp, 36
     sw t0, 0(sp)    #coloca o f na pilha
     sw t1, 4(sp)    #coloca o e na pilha
     sw t2, 8(sp)    #coloca o d na pilha
@@ -66,6 +62,8 @@ operation:
     sw t5, 20(sp)   #coloca o a na pilha
 
     jal mystery_function
-    mv ra, t6       #pega o ra de novo kkkkkkkk
+    addi sp, sp, -4
+    lw ra, 0(sp)
+    addi sp, sp, 4
     ret
 
