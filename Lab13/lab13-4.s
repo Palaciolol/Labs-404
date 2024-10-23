@@ -1,48 +1,35 @@
-.globl _start               #this one indicates where the programm begins
-
-//function to read data from standart input
-.section .data
-    input:        .space 400  #número a ser lido
+.globl operation              
 
 .section .text
 .align 2
-
 
 exit:
     li a0, 0           #isso daqui é pra finalizar o programa
     li a7, 93          #syscall de exit
     ecall
 
-#a0 --> first value
-#a1 --> second value 
-#a2 --> third value
+
+#a0 --> int a
+#a1 --> int b
+#a2 --> short c
+#a3 --> short d
+#a4 --> char e 
+#a5 --> char f
+#a5 --> int g
+#a7 --> int h
+#0(sp) --> char i 
+#4(sp) --> char j
+#8(sp) --> short k
+#12(sp) --> short l
+#16(sp) --> int m
+#20(sp) --> int n
 operation:
-    addi sp, sp, -16
-    sw ra, 0(sp)
-    sw a0, 4(sp)
-    sw a1, 8(sp)
-    sw a2, 12(sp)
-    jal SUM1
-    #a0 tá com o valor de SUM1 agora
-    lw t0, 4(sp)            #carrega o valor inicial de a0 da pilha
-    mv a1, t0               #move esse valor pra a1
-    #chama a mystery_function, com a0 sendo a soma de a0 e a1, e a1 sendo o a0 inicial
-    jal mystery_function
-    #acho que vc supõe que o retorno da mystery ta em a0 e faz as coisas, mas ta estranho
-    lw t0, 8(sp)            #carrega o valor de a1 da pilha
-    sub t0, t0, a0          #t0 = a1 - retorno da mystery
-    add t0, t0, a2          #não mudei a2 até agr, então aux tá calculado em t0
-
-    mv a0, t0               #coloca o valor de aux em a0 pra chamar a mystery
-    lw a1, 8(sp)            #carrega o valor de a1 da pilha
-    jal mystery_function    #chama a mystery
-    sub a2, a2, a0          #supõe que o retorno da mystery tá em a0
-    add a2, a2, t0          #t0 ainda tá com o valor de aux
-    mv a0, a2
-    lw ra, 0(sp)
+    lw t1, 8(sp)    #carrega o k em t1
+    lw t2, 16(sp)   #carrega o m em t2
+    add t3, a1, a2  #b+c
+    sub t3, t3, a5  #b+c-f
+    add t3, t3, a7  #b+c-f+h
+    add t3, t3, t1  #b+c-f+h+k
+    sub t3, t3, t2  #b+c-f+h+k-m
+    mv a0, t3
     ret
-
-
-_start:
-    jal operation
-    jal exit
