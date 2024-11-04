@@ -7,8 +7,8 @@
 #a1 --> tamanho do array
 middle_value_int:
     srli a1, a1, 1
+    slli a1, a1, 2
     add a0, a1 , a0
-    slli a0, a0, 2
     lw a0, 0(a0)
     ret
 
@@ -16,8 +16,8 @@ middle_value_int:
 #a1 --> tamanho do array
 middle_value_short:
     srli a1, a1, 1
+    slli a1, a1, 1
     add a0, a1 , a0
-    slli a0, a0, 1
     lh a0, 0(a0)
     ret
 

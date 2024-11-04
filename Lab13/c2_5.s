@@ -6,8 +6,7 @@
 node_creation:
     addi sp, sp, -4
     sw ra, 0(sp)    #salva o ra na stack
-    mv t0, sp       #coloca o sp no t0
-    addi sp, sp, -112   #aloca espaço na pilha
+    addi sp, sp, -8 #aloca espaço na pilha
     mv a0, sp       #coloca o sp no a0
     li t1, 30       #carrega o valor 30
     sw t1, 0(sp)    #coloca o 30 na stack
@@ -21,7 +20,7 @@ node_creation:
     addi sp, sp ,1  #incrementa  a stack
     sw t1, 0(sp)    #coloca o -12 na stack
     jal mystery_function
-    mv sp, t0       #recupera o sp
+    addi sp, sp, 2
     lw ra, 0(sp)    #recupera o ra
     addi sp, sp, 4
     ret
