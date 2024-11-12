@@ -1,12 +1,17 @@
 .globl _start
 .globl control_logic
 
+.bss
+.align 4
+    isr_stack: .space 1024  #aloca espaço na pilha de ISRs
+    isr_stack_end:          #base da pilha de ISRs
+
 .data
     x_pos: .word 0
 
 .text
 .align 4
-set car_adress, 0xFFFF0100
+.set car_adress, 0xFFFF0100
 
 int_handler:
     csrrw sp, mscratch, sp  #troca sp com mscracth
@@ -72,19 +77,18 @@ _start:
     ori t1, t1, 0x8         #seta o bit 3 (MIE) do registrador mstatus
     csrw mstatus, t1
 
-    csrr t1, mstatus # Update the mstatus.MPP
-    li t2, ~0x1800 # field (bits 11 and 12)
-    and t1, t1, t2 # with value 00 (U-mode)
+    csrr t1, mstatus        #Update the mstatus.MPP
+    li t2, ~0x1800          #field (bits 11 and 12)
+    and t1, t1, t2          #with value 00 (U-mode)
     csrw mstatus, t1
-    la t0, user_main # Loads the user software
-    csrw mepc, t0 # entry point into mepc
-    mret # PC <= MEPC; mode <= MPP;
+    la t0, user_main        #Loads the user software
+    csrw mepc, t0           #entry point into mepc
+    mret                    #PC <= MEPC; mode <= MPP;
 
     csrr t0, mepc           #load return address (address of the instruction that invoked the syscall)
     addi t0, t0, 4          #adds 4 to the return address (to return after ecall)
     csrw mepc, t0           #stores the return address back on mepc
     mret                    #recover remaining context (pc <- mepc)
-
     jal user_main
 
 
@@ -125,6 +129,6 @@ control_logic:
         li a7, 11
         ecall
 
-    j infinite_loop
+    #j infinite_loop
     ret
 
