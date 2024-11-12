@@ -5,6 +5,9 @@
 .align 4
     isr_stack: .space 1024  #aloca espaço na pilha de ISRs
     isr_stack_end:          #base da pilha de ISRs
+    user_stack: .space 5000 #aloca espaço na pilha do usuário 
+    user_stack_end:         #base da pilha do usuário
+    
 
 .data
     x_pos: .word 0
@@ -64,31 +67,34 @@ set_hand_brake:
 
 
 _start:
-    la sp, isr_stack_end
+    la sp, user_stack_end
     la t0, isr_stack_end    #t0 <= base da pilha
     csrw mscratch, t0       #mscratch <= t0
 
     csrr t1, mie            #t1 recebe mie
-    li t2, 0x800
-    or t1, t1, t2
+    li t2, 0x800            #t2 recebe 2048
+    or t1, t1, t2           #t1 = t1 or t2
     csrw mie, t1            #mie recebe t1
 
     csrr t1, mstatus        #t1 recebe mstatus
     ori t1, t1, 0x8         #seta o bit 3 (MIE) do registrador mstatus
     csrw mstatus, t1
 
+    la t0, int_handler      #carrega o endereço da main_isr em mtvec
+    csrw mtvec, t0          #mtvec recebe o t0
+
     csrr t1, mstatus        #Update the mstatus.MPP
     li t2, ~0x1800          #field (bits 11 and 12)
     and t1, t1, t2          #with value 00 (U-mode)
-    csrw mstatus, t1
+    csrw mstatus, t1        
     la t0, user_main        #Loads the user software
     csrw mepc, t0           #entry point into mepc
-    mret                    #PC <= MEPC; mode <= MPP;
-
+    mret
+    
     csrr t0, mepc           #load return address (address of the instruction that invoked the syscall)
     addi t0, t0, 4          #adds 4 to the return address (to return after ecall)
     csrw mepc, t0           #stores the return address back on mepc
-    mret                    #recover remaining context (pc <- mepc)
+
     jal user_main
 
 
