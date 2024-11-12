@@ -26,11 +26,11 @@
 #a4 --> int dur
 play_note:
     li t0, midi         #carrega o adress base do bagulho
-    sb a0, 0(t0)        #coloca o ch no adress correto
     sh a1, 0x02(t0)     #coloca o id
     sb a2, 0x04(t0)     #coloca a note
     sb a3, 0x05(t0)     #coloca a velocidade
     sh a4, 0x06(t0)     #coloca a duração
+    sb a0, 0(t0)        #coloca o ch no adress correto
     ret
 
 
