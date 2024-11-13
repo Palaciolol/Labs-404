@@ -45,8 +45,6 @@ set_engine_and_steering:
     sb a1, 0x20(t2)     #esquerda
     sb a0, 0x21(t2)     #coloca o carro pra ir pra frente
     j restaura_contexto
-    
-
 
 get_position:
     li t2, car_adress
@@ -61,16 +59,12 @@ get_position:
     sw t1, 0(a1)
     lw t1, 0x18(t2)
     sw t1, 0(a2)
-
     j restaura_contexto
-
-
 
 set_hand_brake:
     li t2, car_adress
     sb a0, 0x22(t2)
     j restaura_contexto
-
 
 _start:
     la sp, user_stack_end
@@ -97,7 +91,6 @@ _start:
     csrw mepc, t0           #entry point into mepc
     mret
 
-
 control_logic:
     li a0, 1        #coloca o carro pra ir pra frente
     li a1, -15      #coloca o carro pra ir pra esquerda
@@ -113,8 +106,6 @@ control_logic:
         ecall
         lw t0, 0(sp)
         li t1, 135
-        # sub t1, t1, t0
-        # li t2, 15
         blt t0, t1, can_stop
         j 1b
 
@@ -128,6 +119,5 @@ control_logic:
         li a7, 11
         ecall
     addi sp, sp, 16
-
     ret
 
