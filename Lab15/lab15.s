@@ -5,12 +5,8 @@
 .align 4
     isr_stack: .space 1024  #aloca espaço na pilha de ISRs
     isr_stack_end:          #base da pilha de ISRs
-    user_stack: .space 5000 #aloca espaço na pilha do usuário 
+    user_stack: .space 4096 #aloca espaço na pilha do usuário 
     user_stack_end:         #base da pilha do usuário
-    
-
-.data
-    x_pos: .word 0
 
 .text
 .align 4
@@ -18,13 +14,10 @@
 
 int_handler:
     csrrw sp, mscratch, sp  #troca sp com mscracth
-    addi sp, sp, -32        #aloca espaço na pilha de ISR   
+    addi sp, sp, -16        #aloca espaço na pilha de ISR   
     sw t0, 0(sp)            #salva t0
-    sw a0, 4(sp)            #salva t1
-    sw a1, 8(sp)            #salva t2
-    sw t1, 12(sp)           #salva t3
-    sw a7, 16(sp)
-    sw t2, 20(sp)
+    sw t1, 4(sp)            #salva t1
+    sw t2, 8(sp)            #salva t2
 
     li t0, 10
     beq t0, a7, set_engine_and_steering
@@ -35,14 +28,15 @@ int_handler:
 
 
     restaura_contexto:
-    lw t2, 20(sp)           #carrega a2
-    lw a7, 16(sp)           #carrega a2
-    lw t1, 12(sp)           #carrega a2
-    lw a1, 8(sp)            #salva a2
-    lw a0, 4(sp)            #salva a2
-    lw t0, 0(sp)            #salva a2
-    addi sp, sp, 32         #desaloca a pilha
+    lw t2, 8(sp)            #carrega t2
+    lw t1, 4(sp)            #carrega t1
+    lw t0, 0(sp)            #carrega t0
+    addi sp, sp, 16         #desaloca a pilha
     csrrw sp, mscratch, sp  #troca sp com mscrath
+
+    csrr t0, mepc
+    addi t0, t0, 4
+    csrw mepc, t0
     mret
 
 
@@ -53,11 +47,23 @@ set_engine_and_steering:
     j restaura_contexto
     
 
+
 get_position:
     li t2, car_adress
+    li t0, 1            #temporário que guarda 1
+    sb t0, 0(t2)        #bota o GPS pra ler coordenada
+    1:
+        lb t0, 0(t2)        #carrega pra ver se o GPS leu
+        bnez t0, 1b
     lw t1, 0x10(t2)     #carrega o valor de x em t1
-    sw t1, 0(a0)        #coloca o valor em a0 
+    sw t1, 0(a0)        #coloca o valor em a0
+    lw t1, 0x14(t2)
+    sw t1, 0(a1)
+    lw t1, 0x18(t2)
+    sw t1, 0(a2)
+
     j restaura_contexto
+
 
 
 set_hand_brake:
@@ -90,12 +96,6 @@ _start:
     la t0, user_main        #Loads the user software
     csrw mepc, t0           #entry point into mepc
     mret
-    
-    csrr t0, mepc           #load return address (address of the instruction that invoked the syscall)
-    addi t0, t0, 4          #adds 4 to the return address (to return after ecall)
-    csrw mepc, t0           #stores the return address back on mepc
-
-    jal user_main
 
 
 control_logic:
@@ -104,26 +104,19 @@ control_logic:
     li a7, 10       #código da syscall
     ecall           #chama a syscall
 
-    check_coordinate:
-        li t2, car_adress
-        li t0, 1            #temporário que guarda 1
-        sb t0, 0(t2)        #bota o GPS pra ler coordenada
-        1:
-            lbu t0, 0(t2)        #carrega pra ver se o GPS leu
-            bnez t0, 1b
-        
-        la a0, x_pos
-        li a7, 15   #já que ele leu, posso chamar a syscall pra pegar a posição
-        ecall       #chama a syscall
-        
-    la a0, x_pos
-    lw t1, 0(a0)
-    li t0, 120
-    sub t1, t1, t0
-    li t2, 15
-    bltu t1, t2, can_stop
-    j check_coordinate
-
+    addi sp, sp, -16
+    mv a0, sp
+    addi a1, sp, 4
+    addi a2, sp, 8
+    li a7, 15
+    1:
+        ecall
+        lw t0, 0(sp)
+        li t1, 135
+        # sub t1, t1, t0
+        # li t2, 15
+        blt t0, t1, can_stop
+        j 1b
 
     can_stop:
         li a0, 0
@@ -134,7 +127,7 @@ control_logic:
         li a0, 1
         li a7, 11
         ecall
+    addi sp, sp, 16
 
-    #j infinite_loop
     ret
 
