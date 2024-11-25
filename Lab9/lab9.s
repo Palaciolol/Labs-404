@@ -116,7 +116,7 @@ _start:
     li a1, 0
     la a0, number
     jal convert_to_number
-    cont:
+    cont:   
     la t0, head_node    #ponteiro para o primeiro nó (head_node)
     li t1, 0            #indice da lista (inicia em 0)
     loop2:
