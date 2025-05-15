@@ -22,7 +22,7 @@ int_handler:
     li t0, 10
     beq t0, a7, set_engine_and_steering
     li t0, 15
-    beq t0, a7, get_position
+    beq t0, a7, get_poou can test your code usinsition
     li t0, 11
     beq t0, a7, set_hand_brake
 
